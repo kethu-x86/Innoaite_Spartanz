@@ -107,55 +107,11 @@ async def startup_event():
 def read_root():
     return {"message": "Multiplexed Traffic Monitor API"}
 
-@app.get("/stream")
-def video_feed():
-    """Video streaming route. Put this in the src attribute of an img tag."""
-    return StreamingResponse(generate_mjpeg(), 
-                             media_type="multipart/x-mixed-replace; boundary=frame")
-
-@app.get("/devstream/{cam_id}")
-def dev_video_feed(cam_id: str):
-    """Raw video stream for a specific camera ID."""
-    return StreamingResponse(generate_cam_mjpeg(cam_id), 
-                             media_type="multipart/x-mixed-replace; boundary=frame")
-
-def generate_mjpeg():
-    """Generator for MJPEG stream."""
-    global output_frame
-    while True:
-        with lock:
-            if output_frame is None:
-                time.sleep(0.1)
-                continue
-            (flag, encodedImage) = cv2.imencode(".jpg", output_frame)
-            if not flag:
-                continue
-        
-        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-               bytearray(encodedImage) + b'\r\n')
-        time.sleep(0.03) # Limit stream FPS
-
-def generate_cam_mjpeg(cam_id: str):
-    """Generator for specific camera MJPEG stream."""
-    global latest_frames
-    while True:
-        with lock:
-            frame = latest_frames.get(cam_id)
-            if frame is None:
-                time.sleep(0.1)
-                continue
-            (flag, encodedImage) = cv2.imencode(".jpg", frame)
-            if not flag:
-                continue
-        
-        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-               bytearray(encodedImage) + b'\r\n')
-        time.sleep(0.03) # Limit stream FPS
-
 @app.get("/data")
 def get_data():
     """Return latest counts."""
     return JSONResponse(content=processor.latest_counts)
+
 
 @app.post("/config/mask")
 def set_mask(config: MaskConfig):
