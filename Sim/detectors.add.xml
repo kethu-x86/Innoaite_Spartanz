@@ -1,10 +1,17 @@
 <additional>
-    <inductionLoop id="det_0_0" lane="0/1_to_1/1.-100_0" pos="80" freq="30" file="detectors.out.xml"/>
-    <inductionLoop id="det_0_1" lane="0/1_to_1/1.-100_1" pos="80" freq="30" file="detectors.out.xml"/>
-    <inductionLoop id="det_1_0" lane="1/0_to_1/1.-100_0" pos="80" freq="30" file="detectors.out.xml"/>
-    <inductionLoop id="det_1_1" lane="1/0_to_1/1.-100_1" pos="80" freq="30" file="detectors.out.xml"/>
-    <inductionLoop id="det_2_0" lane="1/2_to_1/1.-100_0" pos="80" freq="30" file="detectors.out.xml"/>
-    <inductionLoop id="det_2_1" lane="1/2_to_1/1.-100_1" pos="80" freq="30" file="detectors.out.xml"/>
-    <inductionLoop id="det_3_0" lane="2/1_to_1/1.-100_0" pos="80" freq="30" file="detectors.out.xml"/>
-    <inductionLoop id="det_3_1" lane="2/1_to_1/1.-100_1" pos="80" freq="30" file="detectors.out.xml"/>
+    <!-- West Entrance -->
+    <inductionLoop id="West_0" lane="West_Entrance_0" pos="80" freq="30" file="detectors.out.xml"/>
+    <inductionLoop id="West_1" lane="West_Entrance_1" pos="80" freq="30" file="detectors.out.xml"/>
+
+    <!-- South Entrance -->
+    <inductionLoop id="South_0" lane="South_Entrance_0" pos="80" freq="30" file="detectors.out.xml"/>
+    <inductionLoop id="South_1" lane="South_Entrance_1" pos="80" freq="30" file="detectors.out.xml"/>
+
+    <!-- North Entrance -->
+    <inductionLoop id="North_0" lane="North_Entrance_0" pos="80" freq="30" file="detectors.out.xml"/>
+    <inductionLoop id="North_1" lane="North_Entrance_1" pos="80" freq="30" file="detectors.out.xml"/>
+
+    <!-- East Entrance -->
+    <inductionLoop id="East_0" lane="East_Entrance_0" pos="80" freq="30" file="detectors.out.xml"/>
+    <inductionLoop id="East_1" lane="East_Entrance_1" pos="80" freq="30" file="detectors.out.xml"/>
 </additional>
