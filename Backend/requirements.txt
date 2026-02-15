@@ -4,3 +4,12 @@ opencv-python
 ultralytics
 pydantic
 python-multipart
+torch
+traci
+sumolib
+pandas
+joblib
+scikit-learn
+openai
+
+

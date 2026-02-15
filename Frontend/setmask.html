@@ -23,11 +23,13 @@
         border: 2px solid #333;
         background-color: #000;
       }
-      #stream-img {
+      #stream-video {
         width: 100%;
         height: 100%;
         display: block;
+        object-fit: contain;
       }
+
       #mask-canvas {
         position: absolute;
         top: 0;
@@ -73,12 +75,8 @@
     <h1>Configure Camera Masks</h1>
 
     <div class="container">
-      <!-- Stream Image -->
-      <img
-        id="stream-img"
-        src="http://localhost:8000/stream"
-        alt="Video Stream"
-      />
+      <!-- WebRTC Video -->
+      <video id="stream-video" autoplay playsinline muted></video>
       <!-- Overlay Canvas for Drawing -->
       <canvas id="mask-canvas" width="640" height="640"></canvas>
     </div>
@@ -100,18 +98,62 @@
 
     <script>
       const canvas = document.getElementById("mask-canvas");
-      const img = document.getElementById("stream-img");
+      const video = document.getElementById("stream-video");
       const ctx = canvas.getContext("2d");
       const statusDiv = document.getElementById("status");
       let points = [];
+      let pc = null;
 
       // Initial stream
-      updateStream();
+      startWebRTC(document.getElementById("cam-select").value);
+
+      async function startWebRTC(camId = null) {
+        if (pc) {
+          pc.close();
+        }
+
+        if (!camId) {
+          camId = document.getElementById("cam-select").value;
+        }
+
+        pc = new RTCPeerConnection();
+
+        pc.ontrack = (event) => {
+          video.srcObject = event.streams[0];
+        };
+
+        // Add a transceiver for video
+        pc.addTransceiver("video", { direction: "recvonly" });
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        try {
+          const response = await fetch("/offer", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              sdp: pc.localDescription.sdp,
+              type: pc.localDescription.type,
+              cam_id: camId,
+            }),
+          });
+
+          const answer = await response.json();
+          await pc.setRemoteDescription(answer);
+          console.log(`WebRTC connection established for ${camId}`);
+        } catch (e) {
+          console.error("WebRTC offer failed:", e);
+          statusDiv.textContent = "WebRTC Error: Check console";
+        }
+      }
 
       function updateStream() {
         const camId = document.getElementById("cam-select").value;
-        img.src = `http://localhost:8000/devstream/${camId}`;
-        clearMask(); // Clear mask when switching cameras
+        startWebRTC(camId);
+        clearMask();
       }
 
       // Handle clicks on canvas
@@ -176,7 +218,7 @@
         }
 
         try {
-          const response = await fetch("http://localhost:8000/config/mask", {
+          const response = await fetch("/config/mask", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
