@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-02-15T11:05:15.426399+05:30 by Eclipse SUMO GUI 1.25.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="C:\Users\Kai\Mod_Builds\Innoate\Sim\map.net.xml"/>
+        <additional-files value="C:\Users\Kai\Mod_Builds\Innoate\Sim\detectors.add.xml"/>
+    </input>
+
+</sumoConfiguration>
