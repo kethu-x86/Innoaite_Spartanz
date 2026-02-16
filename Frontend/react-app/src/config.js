@@ -1,25 +1,8 @@
-const getBackendUrl = () => {
-  // If we're on localhost, we might be developing, so try to find the backend
-  if (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
-  ) {
-    return "http://localhost:8000";
-  }
-  // Fallback to the lab IP but allow dynamic host if served by backend
-  return `http://${window.location.hostname}:8000`;
-};
-
 // Hardcoded lab IP for cases where hostname resolution might fail or for direct dev
 const LAB_IP = "100.107.46.86";
 const FALLBACK_URL = `http://${LAB_IP}:8000`;
 
-export const API_BASE_URL =
-  window.location.port === "8000"
-    ? "" // Relative if served by the backend itself
-    : window.location.hostname === "localhost"
-      ? "http://100.107.46.86:8000" // Forced remote IP as per user request
-      : FALLBACK_URL;
+export const API_BASE_URL = "http://localhost:8000";
 
 export const ENDPOINTS = {
   DATA: `${API_BASE_URL}/data`,

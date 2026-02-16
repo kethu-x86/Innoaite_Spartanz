@@ -123,7 +123,8 @@ class StreamGenerator:
     def release(self):
         """Release all resources."""
         for cap in self.caps:
-            cap.release()
+            if cap != "dummy" and hasattr(cap, 'release'):
+                cap.release()
 
 if __name__ == "__main__":
     # Test with webcam or dummy file

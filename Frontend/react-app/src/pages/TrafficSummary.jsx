@@ -1,13 +1,9 @@
 import React from 'react';
 import { FileText, TrendingUp, AlertTriangle, Shield, ShieldAlert } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { useTraffic } from '../context/TrafficContext';
 
-const DIRECTION_COLORS = {
-    North: '#6366f1',
-    South: '#22d3ee',
-    East: '#f59e0b',
-    West: '#10b981',
-};
+import { DIRECTION_COLORS } from '../constants';
 
 const TrafficSummary = () => {
     const { summary, refreshSummary, alerts, violations, emergency } = useTraffic();
@@ -45,7 +41,7 @@ const TrafficSummary = () => {
                             <h3><FileText size={18} /> AI Traffic Summary</h3>
                         </div>
                         <div className="narrative-box glass-inset">
-                            <p className="narrative-text">{narrativeText}</p>
+                            <ReactMarkdown className="narrative-text">{narrativeText}</ReactMarkdown>
                         </div>
                     </div>
 

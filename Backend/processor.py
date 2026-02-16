@@ -4,6 +4,7 @@ from ultralytics import YOLO
 import logging
 import json
 import os
+from datetime import datetime
 
 from alert_service import ViolationTracker
 
@@ -162,7 +163,6 @@ class FrameProcessor:
         self.violation_tracker.update(cam_id, detections)
 
         # Update Global State
-        from datetime import datetime
         self.latest_counts[cam_id] = {
             "count": self.batch_count,
             "timestamp": datetime.now().isoformat()

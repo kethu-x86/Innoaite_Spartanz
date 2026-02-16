@@ -2,19 +2,7 @@ import React, { useState } from 'react';
 import { AlertTriangle, Shield, Siren, Bell, ChevronDown, Radio } from 'lucide-react';
 import { useTraffic } from '../context/TrafficContext';
 
-const SEVERITY_COLORS = {
-    normal: 'var(--success)',
-    moderate: 'var(--warning)',
-    heavy: '#ff6b35',
-    critical: 'var(--danger)',
-};
-
-const SEVERITY_BG = {
-    normal: 'rgba(16, 185, 129, 0.1)',
-    moderate: 'rgba(245, 158, 11, 0.1)',
-    heavy: 'rgba(255, 107, 53, 0.1)',
-    critical: 'rgba(239, 68, 68, 0.15)',
-};
+import { SEVERITY_COLORS, SEVERITY_BG } from '../constants';
 
 const Alerts = () => {
     const { alerts, emergency, triggerEmergency, health } = useTraffic();

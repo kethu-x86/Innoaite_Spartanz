@@ -5,12 +5,7 @@ import { useTraffic } from '../context/TrafficContext';
 import WebRTCPlayer from '../components/WebRTCPlayer';
 import SumoOverlay from '../components/SumoOverlay';
 
-const DIRECTION_COLORS = {
-    North: '#6366f1',
-    South: '#22d3ee',
-    East: '#f59e0b',
-    West: '#10b981',
-};
+import { DIRECTION_COLORS } from '../constants';
 
 const Dashboard = () => {
     const { data, health, yoloAction, summary, alerts, emergency } = useTraffic();
@@ -183,22 +178,22 @@ const Dashboard = () => {
                         </div>
                         <div className="control-status">
                             <div className="control-item glass-inset">
-                                <label>Decision Engine</label>
+                                <span className="control-label">Decision Engine</span>
                                 <span className={`status-indicator ${health.models_loaded ? 'active' : 'inactive'}`}>
                                     {health.models_loaded ? 'ACTIVE' : 'OFFLINE'}
                                 </span>
                             </div>
                             <div className="control-item glass-inset">
-                                <label>Last Action</label>
+                                <span className="control-label">Last Action</span>
                                 <span>{yoloAction?.action === 0 ? 'KEEP' : yoloAction?.action === 1 ? 'SWITCH' : '—'}</span>
                             </div>
                             <div className="control-item glass-inset">
-                                <label>Source</label>
+                                <span className="control-label">Source</span>
                                 <span>{simRunning ? 'SUMO' : 'YOLO'}</span>
                             </div>
                             {emergency?.active && (
                                 <div className="control-item glass-inset emergency-control-item">
-                                    <label><Shield size={14} /> Emergency</label>
+                                    <span className="control-label"><Shield size={14} /> Emergency</span>
                                     <span style={{ color: 'var(--danger)' }}>{emergency.direction} PRIORITY</span>
                                 </div>
                             )}
@@ -213,7 +208,11 @@ const Dashboard = () => {
                         <div className="mini-alert-feed">
                             {current && current.severity !== 'normal' ? (
                                 <div className="mini-alert glass-inset" style={{
-                                    borderLeft: `3px solid ${current.severity === 'critical' ? 'var(--danger)' : current.severity === 'heavy' ? '#ff6b35' : 'var(--warning)'}`,
+                                    borderLeft: `3px solid ${
+                                        current.severity === 'critical' ? 'var(--danger)' : 
+                                        current.severity === 'heavy' ? '#ff6b35' : 
+                                        'var(--warning)'
+                                    }`,
                                 }}>
                                     <span className="mini-alert-severity">{current.severity?.toUpperCase()}</span>
                                     <p className="mini-alert-msg">{current.message}</p>
@@ -223,9 +222,13 @@ const Dashboard = () => {
                                     <p>Traffic flowing normally ✓</p>
                                 </div>
                             )}
-                            {alerts?.history?.slice(0, 2).map((a, i) => (
-                                <div key={i} className="mini-alert glass-inset" style={{
-                                    borderLeft: `3px solid ${a.severity === 'critical' ? 'var(--danger)' : a.severity === 'heavy' ? '#ff6b35' : 'var(--warning)'}`,
+                            {alerts?.history?.slice(0, 2).map((a) => (
+                                <div key={a.timestamp || Math.random()} className="mini-alert glass-inset" style={{
+                                    borderLeft: `3px solid ${
+                                        a.severity === 'critical' ? 'var(--danger)' : 
+                                        a.severity === 'heavy' ? '#ff6b35' : 
+                                        'var(--warning)'
+                                    }`,
                                     opacity: 0.7,
                                 }}>
                                     <span className="mini-alert-severity">{a.severity?.toUpperCase()}</span>

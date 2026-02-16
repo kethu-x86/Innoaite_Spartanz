@@ -1,5 +1,6 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException
-from fastapi.responses import StreamingResponse, JSONResponse
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import cv2
 import threading
@@ -7,7 +8,6 @@ import time
 import uvicorn
 import logging
 from typing import List, Optional
-import json
 import asyncio
 
 from stream_gen import StreamGenerator
@@ -16,20 +16,38 @@ import rl_inference
 from llm_service import TrafficNarrator
 from webrtc_utils import VideoTransformTrack
 from alert_service import AlertEngine, EmergencyManager
-from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
 
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+# Suppress benign aioice errors (WinError 10049 on APIPA addresses)
+logging.getLogger("aioice.ice").setLevel(logging.WARNING)
+
+# --- Lifespan (replaces deprecated on_event) ---
+
+@asynccontextmanager
+async def lifespan(app):
+    # Startup: launch processing thread
+    t = threading.Thread(target=processing_loop, daemon=True)
+    t.start()
+    logger.info("Processing thread started via lifespan.")
+    yield
+    # Shutdown: close all WebRTC peer connections
+    coros = [pc.close() for pc in pcs]
+    await asyncio.gather(*coros)
+    pcs.clear()
+    logger.info("All peer connections closed.")
+
+app = FastAPI(lifespan=lifespan)
 
 # Enable CORS
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all origins for testing
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,7 +74,7 @@ lock = threading.Lock()
 # Initialize RL Controller
 traffic_controller = rl_inference.TrafficController()
 sumo_manager = rl_inference.SumoManager(traffic_controller)
-traffic_narrator = TrafficNarrator(base_url="http://100.107.46.86:1234/v1")
+traffic_narrator = TrafficNarrator(base_url="http://127.0.0.1:1234/v1")
 
 # Alert & Emergency Systems
 alert_engine = AlertEngine(junction_name="Kochi Junction")
@@ -85,26 +103,19 @@ def processing_loop():
     logger.info("Starting processing loop...")
     try:
         for frame_data in generator.generate():
-            # Store raw frame for devstream
             cam_id = frame_data['cam_id']
-            with lock:
-                latest_frames[cam_id] = frame_data['frame'].copy()
+            frame = frame_data['frame']
 
-            # Process frame
+            # Process frame (annotates in-place on a copy)
             annotated_frame, _ = processor.process(frame_data)
             
-            # Update global frame for streaming
+            # Single lock acquisition for both updates
             with lock:
-                output_frame = annotated_frame.copy()
+                latest_frames[cam_id] = frame
+                output_frame = annotated_frame
             
     except Exception as e:
         logger.error(f"Error in processing loop: {e}")
-
-@app.on_event("startup")
-async def startup_event():
-    # Start processing in a separate thread
-    t = threading.Thread(target=processing_loop, daemon=True)
-    t.start()
 
 @app.get("/")
 def read_root():
@@ -142,23 +153,37 @@ def health_check():
         "emergency_direction": emergency_state["direction"]
     }
 
+# YOLO action cache — skip inference when counts haven't changed
+_last_yolo_counts = None
+_last_yolo_response = None
+
 @app.get("/control/yolo")
 def get_yolo_action():
-    """Get traffic light action based on live YOLO counts."""
+    """Get traffic light action based on live YOLO counts (cached when unchanged)."""
+    global _last_yolo_counts, _last_yolo_response
+
     counts = processor.latest_counts
     if not counts:
         raise HTTPException(status_code=503, detail="No vehicle counts available")
     
-    # Check for emergency override
     emergency_dir = emergency_manager.get_priority_direction()
+
+    # Skip full RL inference if counts + emergency state are identical
+    if (counts == _last_yolo_counts
+            and _last_yolo_response is not None
+            and _last_yolo_response.get("emergency_direction") == emergency_dir):
+        return _last_yolo_response
+
     action = traffic_controller.get_action(counts, emergency_direction=emergency_dir)
-    return {
+    _last_yolo_response = {
         "action": action, 
         "source": "yolo",
         "counts": counts,
         "emergency_active": emergency_dir is not None,
         "emergency_direction": emergency_dir
     }
+    _last_yolo_counts = counts.copy() if isinstance(counts, dict) else counts
+    return _last_yolo_response
 
 @app.get("/control/sumo/start")
 def start_sumo():
@@ -241,11 +266,21 @@ def get_violations():
         "active_stationary": processor.violation_tracker.get_active_stationary()
     }
 
-# --- Summary Endpoint ---
+# --- Summary Endpoint (60s cache to avoid hammering LLM) ---
+
+_summary_cache = None
+_summary_cache_time = 0
+SUMMARY_CACHE_TTL = 60  # seconds
 
 @app.get("/summary")
 def get_traffic_summary():
-    """Generate a traffic summary using LLM."""
+    """Generate a traffic summary using LLM. Cached for 60 seconds."""
+    global _summary_cache, _summary_cache_time
+
+    now = time.time()
+    if _summary_cache and (now - _summary_cache_time < SUMMARY_CACHE_TTL):
+        return _summary_cache
+
     # Gather Context
     emergency_state = emergency_manager.get_state()
     current_alert = alert_engine.get_current()
@@ -261,10 +296,12 @@ def get_traffic_summary():
     }
     
     summary = traffic_narrator.generate_summary(context, junction_name="Kochi Junction")
-    return {
+    _summary_cache = {
         "summary": summary,
         "context": context
     }
+    _summary_cache_time = now
+    return _summary_cache
 
 # --- WebRTC Endpoints ---
 
@@ -310,12 +347,7 @@ async def webrtc_offer(params: WebRTCOffer):
         "type": pc.localDescription.type
     })
 
-@app.on_event("shutdown")
-async def on_shutdown():
-    # Close all peer connections
-    coros = [pc.close() for pc in pcs]
-    await asyncio.gather(*coros)
-    pcs.clear()
+# Shutdown is handled by lifespan context manager above
 
 
 

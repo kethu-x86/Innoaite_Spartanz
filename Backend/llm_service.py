@@ -5,7 +5,7 @@ from openai import OpenAI
 logger = logging.getLogger(__name__)
 
 class TrafficNarrator:
-    def __init__(self, base_url="http://100.107.46.86:1234/v1", api_key="lm-studio"):
+    def __init__(self, base_url="http://127.0.0.1:1234/v1", api_key="lm-studio"):
         """
         Initialize the LLM client. 
         Default base_url matches the user's provided local server (assuming /v1 standard).

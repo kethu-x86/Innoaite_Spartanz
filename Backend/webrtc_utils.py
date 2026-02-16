@@ -1,11 +1,14 @@
 import asyncio
 import logging
+import numpy as np
 from aiortc import MediaStreamTrack
 from av import VideoFrame
 import fractions
 import time
 
 logger = logging.getLogger(__name__)
+
+MAX_RECV_RETRIES = 300  # ~3 seconds at 10ms intervals
 
 class VideoTransformTrack(MediaStreamTrack):
     """
@@ -21,25 +24,26 @@ class VideoTransformTrack(MediaStreamTrack):
 
     async def recv(self):
         """
-        Receives the next frame.
+        Receives the next frame. Uses iterative retry instead of recursion.
         """
         pts, time_base = await self.next_timestamp()
 
-        # Get the latest frame from the callback (which usually reads from global state)
-        frame = self.get_frame_callback()
-        
-        if frame is None:
-            # If no frame is available, we might want to wait a bit or send a blank frame
-            # For now, let's just wait a tiny bit to avoid busy loop if called too fast
+        # Iterative retry loop (replaces unbounded recursion)
+        for _ in range(MAX_RECV_RETRIES):
+            frame = self.get_frame_callback()
+            if frame is not None:
+                new_frame = VideoFrame.from_ndarray(frame, format="bgr24")
+                new_frame.pts = pts
+                new_frame.time_base = time_base
+                return new_frame
             await asyncio.sleep(0.01)
-            # Recursively try again
-            return await self.recv()
 
-        # Convert OpenCV (BGR) to PyAV VideoFrame (RGB)
-        new_frame = VideoFrame.from_ndarray(frame, format="bgr24")
+        # Fallback: return a black frame to keep the stream alive
+        logger.warning("No frame available after retries, sending blank frame")
+        blank = np.zeros((480, 640, 3), dtype=np.uint8)
+        new_frame = VideoFrame.from_ndarray(blank, format="bgr24")
         new_frame.pts = pts
         new_frame.time_base = time_base
-        
         return new_frame
 
     async def next_timestamp(self):

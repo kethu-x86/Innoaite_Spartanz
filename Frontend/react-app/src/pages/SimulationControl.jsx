@@ -4,7 +4,7 @@ import { useTraffic } from '../context/TrafficContext';
 import { api } from '../services/api';
 
 const SimulationControl = () => {
-    const { yoloAction, health, autoStep, setAutoStep, emergency, triggerEmergency } = useTraffic();
+    const { yoloAction, health, autoStep, setAutoStep, emergency, triggerEmergency, simSpeed, setSimSpeed } = useTraffic();
     const [loading, setLoading] = useState(false);
     const [selectedDir, setSelectedDir] = useState('North');
 
@@ -60,6 +60,28 @@ const SimulationControl = () => {
                             <button className="btn-premium stop" onClick={() => handleControl(api.stopSumo, 'Stop')} disabled={loading || !health.sumo_running}>
                                 <Pause size={20} /> <span>Stop Simulation</span>
                             </button>
+                        </div>
+
+                        {/* Speed Control Slider */}
+                        <div style={{ marginTop: '1.5rem', padding: '0 1rem' }}>
+                             <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                <span>Simulation Speed</span>
+                                <span>{simSpeed < 1000 ? 'Fast' : simSpeed > 1000 ? 'Slow' : 'Normal'} ({simSpeed}ms)</span>
+                            </label>
+                            <input 
+                                type="range" 
+                                min="200" 
+                                max="2000" 
+                                step="100" 
+                                value={simSpeed} 
+                                onChange={(e) => setSimSpeed(Number(e.target.value))}
+                                style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                                disabled={!health.sumo_running}
+                            />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                <span>Fast (0.2s)</span>
+                                <span>Slow (2.0s)</span>
+                            </div>
                         </div>
                     </div>
 

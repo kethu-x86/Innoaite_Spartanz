@@ -126,10 +126,10 @@ class AlertEngine:
 class ViolationTracker:
     """
     Tracks stationary vehicles per camera for illegal parking detection.
-    A vehicle is flagged if its centroid doesn't move >15px for 30+ seconds.
+    A vehicle is flagged if its centroid doesn't move >15px for 120+ seconds.
     """
 
-    def __init__(self, distance_threshold=15, time_threshold=30, max_violations=200):
+    def __init__(self, distance_threshold=15, time_threshold=120, max_violations=200):
         self.distance_threshold = distance_threshold
         self.time_threshold = time_threshold
         self.lock = threading.Lock()
@@ -182,7 +182,7 @@ class ViolationTracker:
                             "position": {"x": cx, "y": cy},
                             "duration": round(duration, 1),
                             "timestamp": datetime.now().isoformat(),
-                            "severity": "warning" if duration < 60 else "critical",
+                            "severity": "warning" if duration < 180 else "critical",
                         }
                         self.violations.appendleft(violation)
                         logger.info(f"Violation detected: {violation}")

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../services/api';
 
 const TrafficContext = createContext();
@@ -12,75 +12,110 @@ export const TrafficProvider = ({ children }) => {
     const [alerts, setAlerts] = useState({ current: null, history: [] });
     const [violations, setViolations] = useState({ violations: [], active_stationary: {} });
     const [emergency, setEmergency] = useState({ active: false, direction: null, remaining_seconds: 0 });
+    const [simSpeed, setSimSpeed] = useState(1000); // Default 1s
 
-    const fetchData = async () => {
+    const sumoRunningRef = useRef(health.sumo_running);
+    useEffect(() => {
+        sumoRunningRef.current = health.sumo_running;
+    }, [health.sumo_running]);
+
+    const fetchData = useCallback(async () => {
         try {
             const res = await api.getData();
             setData(res);
         } catch (e) { console.error("Data poll error", e); }
-    };
+    }, []);
 
-    const fetchHealth = async () => {
+    const fetchHealth = useCallback(async () => {
         try {
             const h = await api.getHealth();
             setHealth({ ...h, status: 'Online' });
         } catch (e) {
             setHealth(prev => ({ ...prev, status: 'Offline' }));
         }
-    };
+    }, []);
 
-    const fetchYoloAction = async () => {
+    const fetchYoloAction = useCallback(async () => {
         try {
             const res = await api.getYoloAction();
             setYoloAction(res);
         } catch (e) { console.error("YOLO poll error", e); }
-    };
+    }, []);
 
-    const fetchSummary = async () => {
+    const fetchSummary = useCallback(async () => {
         try {
             const res = await api.getSummary();
             setSummary(res);
         } catch (e) { console.error("Summary poll error", e); }
-    };
+    }, []);
 
-    const fetchAlerts = async () => {
+    const fetchAlerts = useCallback(async () => {
         try {
             const res = await api.getAlerts();
             setAlerts(res);
         } catch (e) { console.error("Alerts poll error", e); }
-    };
+    }, []);
 
-    const fetchViolations = async () => {
+    const fetchViolations = useCallback(async () => {
         try {
             const res = await api.getViolations();
             setViolations(res);
         } catch (e) { console.error("Violations poll error", e); }
-    };
+    }, []);
 
-    const fetchEmergency = async () => {
+    const fetchEmergency = useCallback(async () => {
         try {
             const res = await api.getEmergency();
             setEmergency(res);
         } catch (e) { console.error("Emergency poll error", e); }
-    };
+    }, []);
 
-    const triggerEmergency = async (direction, active) => {
+    const triggerEmergency = useCallback(async (direction, active) => {
         try {
             await api.setEmergency(direction, active);
             fetchEmergency();
             fetchHealth();
         } catch (e) { console.error("Emergency trigger error", e); }
-    };
+    }, [fetchEmergency, fetchHealth]);
 
-    const runSimStep = async () => {
+    const runSimStep = useCallback(async () => {
         try {
-            await api.stepSumo();
+            const metrics = await api.stepSumo();
+            
+            // Update state immediately to reflect simulation step
+            if (metrics) {
+                setData(metrics.vehicle_count || {});
+                
+                setYoloAction({ 
+                    action: metrics.action, 
+                    source: 'SUMO',
+                    counts: metrics.vehicle_count
+                });
+
+                // Patch summary for overlay visualization
+                setSummary(prev => {
+                    const newSummary = prev ? { ...prev } : {};
+                    // Ensure structure exists
+                    if (!newSummary.context) newSummary.context = {};
+                    if (!newSummary.sumo) newSummary.sumo = {};
+                    
+                    // Update viz data
+                    newSummary.sumo = { 
+                        ...newSummary.sumo, 
+                        ...metrics,
+                        viz: metrics.viz 
+                    };
+                    
+                    return newSummary;
+                });
+            }
         } catch (e) {
             console.error("Auto-step failed", e);
             setAutoStep(false);
         }
-    };
+    }, []);
 
+    // Initial load
     useEffect(() => {
         fetchHealth();
         fetchData();
@@ -88,34 +123,46 @@ export const TrafficProvider = ({ children }) => {
         fetchAlerts();
         fetchViolations();
         fetchEmergency();
+        fetchSummary();
+    }, [fetchHealth, fetchData, fetchYoloAction, fetchAlerts, fetchViolations, fetchEmergency, fetchSummary]);
 
-        const dataInterval = setInterval(() => {
+    // Data polling (1s)
+    useEffect(() => {
+        const interval = setInterval(() => {
             fetchData();
             fetchYoloAction();
             fetchAlerts();
             fetchEmergency();
         }, 1000);
+        return () => clearInterval(interval);
+    }, [fetchData, fetchYoloAction, fetchAlerts, fetchEmergency]);
 
-        const slowInterval = setInterval(() => {
+    // Slow polling (varies)
+    useEffect(() => {
+        const poll = () => {
             fetchHealth();
-            fetchSummary();
             fetchViolations();
-        }, health.sumo_running ? 1000 : 5000);
-
-        return () => {
-            clearInterval(dataInterval);
-            clearInterval(slowInterval);
+            const delay = sumoRunningRef.current ? 1000 : 5000;
+            timeoutId = setTimeout(poll, delay);
         };
-    }, [health.sumo_running]);
+        let timeoutId = setTimeout(poll, 5000);
+        return () => clearTimeout(timeoutId);
+    }, [fetchHealth, fetchViolations]);
+
+    // Summary polling (60s)
+    useEffect(() => {
+        const interval = setInterval(fetchSummary, 60000);
+        return () => clearInterval(interval);
+    }, [fetchSummary]);
 
     // Global Auto-Step Loop
     useEffect(() => {
         let interval;
         if (autoStep && health.sumo_running) {
-            interval = setInterval(runSimStep, 1000);
+            interval = setInterval(runSimStep, simSpeed);
         }
         return () => clearInterval(interval);
-    }, [autoStep, health.sumo_running]);
+    }, [autoStep, health.sumo_running, runSimStep, simSpeed]);
 
     return (
         <TrafficContext.Provider value={{
@@ -123,6 +170,7 @@ export const TrafficProvider = ({ children }) => {
             autoStep, setAutoStep,
             alerts, violations, emergency,
             triggerEmergency,
+            simSpeed, setSimSpeed,
             refreshSummary: fetchSummary,
             refreshAlerts: fetchAlerts,
             refreshViolations: fetchViolations,

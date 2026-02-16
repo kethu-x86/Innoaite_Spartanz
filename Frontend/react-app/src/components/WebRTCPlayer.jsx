@@ -1,47 +1,60 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { api } from '../services/api';
+import { RotateCw } from 'lucide-react';
 
 const WebRTCPlayer = ({ camId }) => {
     const videoRef = useRef(null);
     const peerConnection = useRef(null);
     const [status, setStatus] = useState('connecting');
     const [error, setError] = useState(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const MAX_RETRIES = 3;
 
-    useEffect(() => {
-        const startStream = async () => {
-            try {
-                setStatus('connecting');
+    const startStream = useCallback(async () => {
+        try {
+            setStatus('connecting');
+            setError(null);
 
-                // Create RTCPeerConnection
-                const pc = new RTCPeerConnection({
-                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-                });
-                peerConnection.current = pc;
+            // Cleanup previous connection
+            if (peerConnection.current) {
+                peerConnection.current.close();
+            }
 
-                // Handle incoming tracks
-                pc.ontrack = (event) => {
-                    if (videoRef.current) {
-                        videoRef.current.srcObject = event.streams[0];
-                        setStatus('connected');
-                    }
-                };
+            // Create RTCPeerConnection
+            const pc = new RTCPeerConnection();
+            peerConnection.current = pc;
 
-                pc.onconnectionstatechange = () => {
-                    if (pc.connectionState === 'failed') {
+            // Handle incoming tracks
+            pc.ontrack = (event) => {
+                if (videoRef.current) {
+                    videoRef.current.srcObject = event.streams[0];
+                    setStatus('connected');
+                    setRetryCount(0); // Reset retries on success
+                }
+            };
+
+            pc.onconnectionstatechange = () => {
+                if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                    if (retryCount < MAX_RETRIES) {
+                        console.log(`Connection ${pc.connectionState}, retrying (${retryCount + 1}/${MAX_RETRIES})...`);
+                        setRetryCount(prev => prev + 1);
+                    } else {
                         setStatus('failed');
-                        setError('Connection failed');
+                        setError('Connection lost. Please retry manually.');
                     }
-                };
+                }
+            };
 
-                // Add transceiver to receive video only
-                pc.addTransceiver('video', { direction: 'recvonly' });
+            // Add transceiver to receive video only
+            pc.addTransceiver('video', { direction: 'recvonly' });
 
-                // Create Offer
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
+            // Create Offer
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
 
-                // Wait for ICE gathering to complete
-                await new Promise((resolve) => {
+            // Wait for ICE gathering to complete with 5s timeout
+            await Promise.race([
+                new Promise((resolve) => {
                     if (pc.iceGatheringState === 'complete') {
                         resolve();
                     } else {
@@ -53,21 +66,30 @@ const WebRTCPlayer = ({ camId }) => {
                         };
                         pc.addEventListener('icegatheringstatechange', checkState);
                     }
-                });
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('ICE Gathering Timeout')), 5000))
+            ]);
 
-                const offerSdp = pc.localDescription.sdp;
+            const offerSdp = pc.localDescription.sdp;
 
-                // Send offer to backend via API service
-                const answer = await api.sendOffer(offerSdp, 'offer', camId);
-                await pc.setRemoteDescription(answer);
+            // Send offer to backend via API service
+            const answer = await api.sendOffer(offerSdp, 'offer', camId);
+            await pc.setRemoteDescription(answer);
 
-            } catch (err) {
-                console.error('WebRTC Error:', err);
-                setStatus('error');
-                setError(err.message);
+        } catch (err) {
+            console.error('WebRTC Error:', err);
+            setStatus('error');
+            setError(err.message);
+            
+            // Auto-retry on initial connection error
+            if (retryCount < MAX_RETRIES) {
+                const timeout = Math.pow(2, retryCount) * 1000;
+                setTimeout(() => setRetryCount(prev => prev + 1), timeout);
             }
-        };
+        }
+    }, [camId, retryCount]);
 
+    useEffect(() => {
         startStream();
 
         return () => {
@@ -75,7 +97,7 @@ const WebRTCPlayer = ({ camId }) => {
                 peerConnection.current.close();
             }
         };
-    }, [camId]); // Re-run if camId changes
+    }, [camId, retryCount, startStream]);
 
     return (
         <div className="webrtc-player" style={{ width: '100%', height: '100%', background: '#000', position: 'relative' }}>
@@ -91,13 +113,35 @@ const WebRTCPlayer = ({ camId }) => {
                     position: 'absolute',
                     top: 0, left: 0, right: 0, bottom: 0,
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: status === 'error' || status === 'failed' ? '#ff4444' : '#fff',
                     backgroundColor: 'rgba(0,0,0,0.7)',
-                    zIndex: 10
+                    zIndex: 10,
+                    gap: '1rem',
+                    padding: '1rem',
+                    textAlign: 'center'
                 }}>
-                    {status === 'connecting' ? 'Connecting...' : error || 'Stream Offline'}
+                    <span>{status === 'connecting' ? `Connecting... ${retryCount > 0 ? `(Retry ${retryCount})` : ''}` : error || 'Stream Offline'}</span>
+                    {(status === 'failed' || status === 'error') && (
+                        <button 
+                            onClick={() => { setRetryCount(0); startStream(); }}
+                            style={{
+                                background: 'rgba(255,255,255,0.1)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                color: 'white',
+                                padding: '6px 16px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}
+                        >
+                            <RotateCw size={14} /> Retry
+                        </button>
+                    )}
                 </div>
             )}
         </div>

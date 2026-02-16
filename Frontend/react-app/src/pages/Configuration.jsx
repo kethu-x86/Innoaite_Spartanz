@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import MaskCanvas from '../components/MaskCanvas';
 import WebRTCPlayer from '../components/WebRTCPlayer';
 import { Settings, Camera } from 'lucide-react';
-import { ENDPOINTS } from '../config';
 
 const Configuration = () => {
     const [camId, setCamId] = useState('CAM_00');
