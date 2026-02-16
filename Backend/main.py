@@ -6,20 +6,17 @@ import threading
 import time
 import uvicorn
 import logging
-from typing import List
+from typing import List, Optional
+import json
+import asyncio
 
 from stream_gen import StreamGenerator
 from processor import FrameProcessor
 import rl_inference
 from llm_service import TrafficNarrator
 from webrtc_utils import VideoTransformTrack
+from alert_service import AlertEngine, EmergencyManager
 from aiortc import RTCPeerConnection, RTCSessionDescription
-from typing import List, Optional
-import json
-import asyncio
-
-
-
 
 
 # Configure logging
@@ -41,10 +38,13 @@ app.add_middleware(
 # Global State
 processor = FrameProcessor(model_path="./Backend/models/yolo26l.engine")
 # Simulate 2 cameras with index 0 (webcam) or fallback to test file if needed
-# If user has no webcam, this might fail. Ideally we'd use a file.
-# Let's try to find a valid source.
 try:
-    generator = StreamGenerator(sources=[1, 1, 1, 1], batch_size=4, target_size=(640, 640))
+    generator = StreamGenerator(
+        sources=[1, 1, 1, 1], 
+        labels=['North', 'East', 'West', 'South'],
+        batch_size=4, 
+        target_size=(640, 640)
+    )
 except Exception as e:
     logger.error(f"Failed to initialize StreamGenerator: {e}")
     generator = None
@@ -58,15 +58,21 @@ traffic_controller = rl_inference.TrafficController()
 sumo_manager = rl_inference.SumoManager(traffic_controller)
 traffic_narrator = TrafficNarrator(base_url="http://100.107.46.86:1234/v1")
 
+# Alert & Emergency Systems
+alert_engine = AlertEngine(junction_name="Kochi Junction")
+emergency_manager = EmergencyManager(timeout=120)
+
 # WebRTC State
 pcs = set()
-
-
 
 
 class MaskConfig(BaseModel):
     cam_id: str
     points: List[List[int]]
+
+class EmergencyRequest(BaseModel):
+    direction: str
+    active: bool
 
 def processing_loop():
     """Background loop to process frames."""
@@ -88,12 +94,9 @@ def processing_loop():
             annotated_frame, _ = processor.process(frame_data)
             
             # Update global frame for streaming
-
             with lock:
                 output_frame = annotated_frame.copy()
             
-            # Small sleep to prevent CPU hogging if processing is too fast
-            # time.sleep(0.01) 
     except Exception as e:
         logger.error(f"Error in processing loop: {e}")
 
@@ -105,7 +108,7 @@ async def startup_event():
 
 @app.get("/")
 def read_root():
-    return {"message": "Multiplexed Traffic Monitor API"}
+    return {"message": "Smart Traffic Monitor API — Kochi"}
 
 @app.get("/data")
 def get_data():
@@ -130,25 +133,32 @@ def set_mask(config: MaskConfig):
 @app.get("/health")
 def health_check():
     """Check health of backend and models."""
+    emergency_state = emergency_manager.get_state()
     return {
         "status": "online",
         "models_loaded": traffic_controller.models_loaded,
-        "sumo_running": sumo_manager.sim_running
+        "sumo_running": sumo_manager.sim_running,
+        "emergency_active": emergency_state["active"],
+        "emergency_direction": emergency_state["direction"]
     }
 
 @app.get("/control/yolo")
 def get_yolo_action():
     """Get traffic light action based on live YOLO counts."""
-    # Use processor.latest_counts which is a dict like {'North': 5, ...}
-    # processor.latest_counts is updated by processing_loop
     counts = processor.latest_counts
     if not counts:
         raise HTTPException(status_code=503, detail="No vehicle counts available")
     
-    # We might need to map keys if they differ from what the model expects
-    # currently processor uses 'North', 'South' etc. based on config
-    action = traffic_controller.get_action(counts)
-    return {"action": action, "source": "yolo", "counts": counts}
+    # Check for emergency override
+    emergency_dir = emergency_manager.get_priority_direction()
+    action = traffic_controller.get_action(counts, emergency_direction=emergency_dir)
+    return {
+        "action": action, 
+        "source": "yolo",
+        "counts": counts,
+        "emergency_active": emergency_dir is not None,
+        "emergency_direction": emergency_dir
+    }
 
 @app.get("/control/sumo/start")
 def start_sumo():
@@ -161,11 +171,27 @@ def start_sumo():
 @app.get("/control/sumo/step")
 def step_sumo():
     """Step the SUMO simulation and get the next action."""
-    # This endpoint steps the sim AND returns the decision for the NEXT step
-    # or the result of the current step
-    metrics, err = sumo_manager.step()
+    # Check emergency override
+    emergency_dir = emergency_manager.get_priority_direction()
+    
+    # If emergency, pass it through to the controller
+    # The SumoManager.step() calls controller.get_action() internally,
+    # so we need to pass the emergency direction via the controller or directly
+    metrics, err = sumo_manager.step(emergency_direction=emergency_dir)
     if err:
         raise HTTPException(status_code=500, detail=err)
+    
+    # Generate alerts from SUMO metrics
+    if metrics:
+        alert_engine.evaluate(metrics)
+        
+        # Auto-detect emergency vehicles from SUMO
+        ev = metrics.get("emergency_vehicles", [])
+        if ev and not emergency_manager.get_state()["active"]:
+            # Auto-activate emergency for the first detected vehicle's direction
+            emergency_manager.activate(ev[0]["direction"])
+            logger.warning(f"🚨 Auto-detected emergency vehicle: {ev[0]}")
+    
     return metrics
 
 @app.get("/control/sumo/stop")
@@ -176,26 +202,65 @@ def stop_sumo():
         raise HTTPException(status_code=400, detail=msg)
     return {"status": "stopped", "message": msg}
 
+# --- Emergency Endpoints ---
+
+@app.post("/control/emergency")
+def set_emergency(req: EmergencyRequest):
+    """Activate or deactivate emergency priority override."""
+    if req.active:
+        if req.direction not in ['North', 'South', 'East', 'West']:
+            raise HTTPException(status_code=400, detail="Direction must be North, South, East, or West")
+        emergency_manager.activate(req.direction)
+        return {"status": "activated", "direction": req.direction}
+    else:
+        emergency_manager.deactivate()
+        return {"status": "deactivated"}
+
+@app.get("/control/emergency")
+def get_emergency():
+    """Get current emergency state."""
+    return emergency_manager.get_state()
+
+# --- Alert Endpoints ---
+
+@app.get("/alerts")
+def get_alerts():
+    """Get current alert and recent alert history."""
+    return {
+        "current": alert_engine.get_current(),
+        "history": alert_engine.get_history(50)
+    }
+
+# --- Violation Endpoints ---
+
+@app.get("/violations")
+def get_violations():
+    """Get recent violations (illegal parking, lane violations)."""
+    return {
+        "violations": processor.violation_tracker.get_violations(100),
+        "active_stationary": processor.violation_tracker.get_active_stationary()
+    }
+
+# --- Summary Endpoint ---
+
 @app.get("/summary")
 def get_traffic_summary():
     """Generate a traffic summary using LLM."""
     # Gather Context
+    emergency_state = emergency_manager.get_state()
+    current_alert = alert_engine.get_current()
+    violations = processor.violation_tracker.get_violations(10)
+    
     context = {
         "yolo": processor.latest_counts,
         "rl": traffic_controller.latest_metrics,
-        "sumo": {}
+        "sumo": {},
+        "alerts": current_alert,
+        "violations": violations,
+        "emergency": emergency_state
     }
     
-    # If SUMO is running, get its stats (queue length, etc.)
-    # We can peek at sumo_manager state if we implemented getters or just rely on global state if exposed
-    # For now, let's step or just get state? 
-    # The SumoManager doesn't expose a 'get_state' without stepping.
-    # Let's rely on what we have or modify SumoManager. 
-    # Actually, we can just use the latest metrics from traffic_controller if they originate from SUMO? 
-    # No, SumoManager calculates queue_len in step().
-    # Let's proceed with what we have. TrafficNarrator handles missing data gracefully.
-    
-    summary = traffic_narrator.generate_summary(context)
+    summary = traffic_narrator.generate_summary(context, junction_name="Kochi Junction")
     return {
         "summary": summary,
         "context": context

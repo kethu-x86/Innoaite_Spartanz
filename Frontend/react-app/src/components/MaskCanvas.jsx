@@ -67,12 +67,17 @@ const MaskCanvas = ({ camId, onSave }) => {
         setTimeout(() => setStatus({ message: '', type: '' }), 3000);
     };
 
+    const undoLastPoint = () => {
+        setPoints(points.slice(0, -1));
+    };
+
     const saveMask = async () => {
         if (points.length < 3) {
             setStatus({ message: 'Error: A mask needs at least 3 points.', type: 'error' });
             return;
         }
 
+        setStatus({ message: 'Saving mask...', type: 'info' });
         try {
             const response = await fetch(ENDPOINTS.SET_MASK, {
                 method: "POST",
@@ -98,30 +103,31 @@ const MaskCanvas = ({ camId, onSave }) => {
     };
 
     return (
-        <div className="mask-canvas-container">
-            <div className="canvas-wrapper">
-                {/* The image is handled by the parent or is a background, but here we need to overlay. 
-                     Ideally, the stream is an IMG tag behind the canvas. */}
+        <div className="mask-canvas-container" style={{ width: '100%', height: '100%' }}>
+            <div className="canvas-wrapper" style={{ position: 'relative', width: '100%', height: '100%' }}>
                 <canvas
                     ref={canvasRef}
                     width={640}
                     height={640}
                     onClick={handleCanvasClick}
                     className="mask-overlay"
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'crosshair' }}
                 />
             </div>
 
-            <div className="controls">
-                <button className="btn secondary" onClick={clearMask}>Clear Mask</button>
+            <div className="controls" style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
+                <button className="btn secondary" onClick={undoLastPoint} disabled={points.length === 0}>Undo</button>
+                <button className="btn secondary" onClick={clearMask}>Clear All</button>
                 <button className="btn primary" onClick={saveMask}>Save Mask</button>
             </div>
             {status.message && (
-                <div className={`status-message ${status.type}`}>
+                <div className={`status-message ${status.type}`} style={{ marginTop: '0.5rem' }}>
                     {status.message}
                 </div>
             )}
         </div>
     );
 };
+
 
 export default MaskCanvas;

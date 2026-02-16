@@ -5,6 +5,8 @@ import logging
 import json
 import os
 
+from alert_service import ViolationTracker
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +28,9 @@ class FrameProcessor:
         
         # Global state for API
         self.latest_counts = {} # {cam_id: {"count": int, "timestamp": str}}
+        
+        # Violation tracking
+        self.violation_tracker = ViolationTracker()
         
         self.load_masks()
 
@@ -152,6 +157,9 @@ class FrameProcessor:
         cv2.putText(frame, f"BATCH: {batch_id}", (30, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         cv2.putText(frame, f"COUNT: {self.batch_count}", (30, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(frame, f"STATUS: {mask_status}", (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+
+        # 7. Update Violation Tracker (illegal parking detection)
+        self.violation_tracker.update(cam_id, detections)
 
         # Update Global State
         from datetime import datetime

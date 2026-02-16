@@ -116,7 +116,8 @@ class TrafficController:
             sim_time = now.hour * 3600 + now.minute * 60 + now.second
 
         hour = (sim_time // 3600) % 24
-        dow = 0 # Placeholder if not available
+        import datetime as _dt
+        dow = _dt.datetime.now().weekday()  # 0=Monday, 6=Sunday
 
         # Calculate means from history
         if len(self.history) >= 10:
@@ -145,12 +146,35 @@ class TrafficController:
         ]
         return features, means
 
-    def get_action(self, current_counts, sim_time=None, current_phase=0):
+    # Phase-to-direction mapping for emergency preemption
+    PHASE_GREEN_DIRS = {
+        # Phases 0-3: East-West green
+        0: ['East', 'West'], 1: ['East', 'West'],
+        2: ['East', 'West'], 3: ['East', 'West'],
+        # Phases 4-7: North-South green
+        4: ['North', 'South'], 5: ['North', 'South'],
+        6: ['North', 'South'], 7: ['North', 'South'],
+    }
+
+    def get_action(self, current_counts, sim_time=None, current_phase=0, emergency_direction=None):
         """
         Get the recommended traffic light action (0 or 1).
         Action 0: Keep phase
         Action 1: Switch phase
+        
+        If emergency_direction is set, bypasses DQN to preempt signal
+        for the given direction.
         """
+        # Emergency priority override — bypass the model entirely
+        if emergency_direction:
+            green_dirs = self.PHASE_GREEN_DIRS.get(current_phase, [])
+            if emergency_direction in green_dirs:
+                logger.info(f"🚨 Emergency: {emergency_direction} already has green (phase {current_phase}). Keeping.")
+                return 0  # Already green for emergencydirection
+            else:
+                logger.info(f"🚨 Emergency: Switching to give {emergency_direction} green (from phase {current_phase}).")
+                return 1  # Switch to give emergency direction green
+
         if not self.models_loaded:
             logger.warning("Models not loaded, returning default action 0")
             return 0
@@ -159,12 +183,23 @@ class TrafficController:
         # For now assume current_counts has keys 'North', 'South', etc. or we map them.
         # If passed from YOLO processor, it might be raw dictionary.
         
-        # Ensure we have the right keys
+        # Ensure we have the right keys and extract count if it's a dictionary (from YOLO processor)
+        def get_val(v):
+            if isinstance(v, dict):
+                return int(v.get('count', 0))
+            try:
+                return int(v) if v is not None else 0
+            except (ValueError, TypeError):
+                return 0
+
+        # Debugging: let's see what we are getting
+        # logger.info(f"DEBUG RL RAW COUNTS: {current_counts}")
+
         safe_counts = {
-            'North': current_counts.get('North', 0),
-            'South': current_counts.get('South', 0),
-            'East': current_counts.get('East', 0),
-            'West': current_counts.get('West', 0)
+            'North': get_val(current_counts.get('North')),
+            'South': get_val(current_counts.get('South')),
+            'East':  get_val(current_counts.get('East')),
+            'West':  get_val(current_counts.get('West'))
         }
 
         features, means = self._compute_features(safe_counts, sim_time)
@@ -250,12 +285,16 @@ class SumoManager:
                 return False, f"Config not found: {self.sumo_cfg}"
 
             try:
-                sumo_binary = sumolib.checkBinary('sumo') # Use 'sumo' for headless, 'sumo-gui' for GUI
-                # For API control, headless is usually better, but user might want to see it?
-                # Let's default to sumo (headless) for backend stability.
+                # Use 'sumo-gui' to showcase the simulation
+                sumo_binary = sumolib.checkBinary('sumo-gui')
                 
-                self.sumo_cmd = [sumo_binary, "-c", str(self.sumo_cfg), "--waiting-time-memory", "1000", "--no-warnings"]
+                # Added --start to begin simulation immediately
+                # Added --quit-on-end to close GUI when simulation finishes
+                self.sumo_cmd = [sumo_binary, "-c", str(self.sumo_cfg), 
+                                 "--waiting-time-memory", "1000", 
+                                 "--no-warnings", "--start", "true", "--quit-on-end", "true"]
                 traci.start(self.sumo_cmd)
+
                 
                 self.tl_id = traci.trafficlight.getIDList()[0]
                 self.sim_running = True
@@ -267,7 +306,7 @@ class SumoManager:
                 self.sim_running = False
                 return False, str(e)
 
-    def step(self):
+    def step(self, emergency_direction=None):
         with self.lock:
             if not self.sim_running:
                 return None, "Simulation not running"
@@ -278,8 +317,11 @@ class SumoManager:
                 sim_time = traci.simulation.getTime()
                 curr_phase = traci.trafficlight.getPhase(self.tl_id)
 
-                # 2. Get AI Action
-                action = self.controller.get_action(curr_counts, sim_time, curr_phase)
+                # 2. Get AI Action (with emergency override if active)
+                action = self.controller.get_action(
+                    curr_counts, sim_time, curr_phase, 
+                    emergency_direction=emergency_direction
+                )
 
                 # 3. Apply Action
                 if action == 1:
@@ -293,6 +335,10 @@ class SumoManager:
                 metrics = self._get_metrics(curr_counts)
                 metrics["action"] = action
                 metrics["step"] = self.step_count
+                
+                # Sync with controller for /summary endpoint
+                self.controller.latest_metrics.update(metrics)
+
                 
                 return metrics, None
 
@@ -325,10 +371,9 @@ class SumoManager:
         try:
             for direction, sensors in sensor_map.items():
                 for sensor_id in sensors:
-                    # Depending on how the sim is set up, might need to subscribe or just getLastStep
                     counts[direction] += traci.inductionloop.getLastStepVehicleNumber(sensor_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Sensor read error in _get_directional_counts: {e}")
         return counts
 
     def _get_metrics(self, counts):
@@ -336,8 +381,55 @@ class SumoManager:
         waiting_time = sum([traci.lane.getWaitingTime(l) for l in controlled_lanes])
         queue_len = sum([traci.lane.getLastStepHaltingNumber(l) for l in controlled_lanes])
         
+        # Get visualization data
+        viz_data = {
+            'North': self._get_lane_vehicles(["North_0", "North_1"]),
+            'South': self._get_lane_vehicles(["South_0", "South_1"]),
+            'East':  self._get_lane_vehicles(["East_0", "East_1"]),
+            'West':  self._get_lane_vehicles(["West_0", "West_1"]),
+            'tl_phase': traci.trafficlight.getPhase(self.tl_id)
+        }
+
+        # Detect emergency vehicles across all lanes
+        emergency_vehicles = []
+        for direction, vehs in viz_data.items():
+            if direction == 'tl_phase':
+                continue
+            for v in vehs:
+                vtype = v.get('type', '').lower()
+                if 'emergency' in vtype or 'ambulance' in vtype or 'fire' in vtype or 'police' in vtype:
+                    emergency_vehicles.append({
+                        'id': v['id'],
+                        'direction': direction,
+                        'type': v['type'],
+                        'pos': v['pos']
+                    })
+        
         return {
             "queue_length": queue_len,
             "waiting_time": waiting_time,
-            "vehicle_count": counts
+            "vehicle_count": counts,
+            "viz": viz_data,
+            "emergency_vehicles": emergency_vehicles
         }
+
+    def _get_lane_vehicles(self, sensors):
+        """Helper to get vehicles and their positions for specific sensors/lanes."""
+        vehicles = []
+        try:
+            for sensor_id in sensors:
+                lane_id = traci.inductionloop.getLaneID(sensor_id)
+                lane_length = traci.lane.getLength(lane_id)
+                veh_ids = traci.lane.getLastStepVehicleIDs(lane_id)
+                for vid in veh_ids:
+                    pos = traci.vehicle.getLanePosition(vid)
+                    rel_pos = (lane_length - pos) / max(1, lane_length)
+                    vehicles.append({
+                        "id": vid,
+                        "pos": rel_pos,
+                        "type": traci.vehicle.getTypeID(vid)
+                    })
+        except Exception as e:
+            logger.warning(f"Sensor read error in _get_lane_vehicles: {e}")
+        return vehicles
+

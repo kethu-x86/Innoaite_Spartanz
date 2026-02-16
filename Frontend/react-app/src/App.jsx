@@ -1,27 +1,29 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { TrafficProvider } from './context/TrafficContext';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import Configuration from './pages/Configuration';
-import TrafficSummary from './pages/TrafficSummary';
 import SimulationControl from './pages/SimulationControl';
-import './App.css';
+import TrafficSummary from './pages/TrafficSummary';
+import Alerts from './pages/Alerts';
+import Violations from './pages/Violations';
 
 function App() {
   return (
-    <Router>
-      <div className="app">
+    <TrafficProvider>
+      <BrowserRouter>
         <Navbar />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/configuration" element={<Configuration />} />
-            <Route path="/summary" element={<TrafficSummary />} />
-            <Route path="/simulation" element={<SimulationControl />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/config" element={<Configuration />} />
+          <Route path="/summary" element={<TrafficSummary />} />
+          <Route path="/simulation" element={<SimulationControl />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/violations" element={<Violations />} />
+        </Routes>
+      </BrowserRouter>
+    </TrafficProvider>
   );
 }
 

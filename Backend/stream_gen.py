@@ -8,17 +8,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class StreamGenerator:
-    def __init__(self, sources, batch_size=4, target_size=(640, 640)):
+    def __init__(self, sources, labels=None, batch_size=4, target_size=(640, 640)):
         """
         Simulates a multiplexed stream from multiple sources.
         
         Args:
             sources (list): List of video sources (file paths or camera indices).
+            labels (list): List of labels for each camera (e.g. ['North', 'East']).
             batch_size (int): Number of frames to yield per camera before switching.
             target_size (tuple): Target resolution (width, height) to resize frames to.
         """
         self.sources = sources
+        self.labels = labels or [f"CAM_{i:02d}" for i in range(len(sources))]
         self.batch_size = batch_size
+
         self.target_size = target_size
         self.caps = []
         self.current_source_idx = 0
@@ -71,7 +74,8 @@ class StreamGenerator:
         while True:
             # Determine current camera
             cap = self.caps[self.current_source_idx]
-            cam_id = f"CAM_{self.current_source_idx:02d}"
+            cam_id = self.labels[self.current_source_idx]
+
             
             if cap == "dummy":
                 # Generate dummy frame (noise)
