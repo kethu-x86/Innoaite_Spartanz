@@ -11,6 +11,7 @@ if os.name == 'nt':
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import cv2
 import threading
@@ -127,9 +128,7 @@ def processing_loop():
     except Exception as e:
         logger.error(f"Error in processing loop: {e}")
 
-@app.get("/")
-def read_root():
-    return {"message": "Smart Traffic API"}
+# Served via StaticFiles mount below
 
 @app.get("/data")
 def get_data():
@@ -383,6 +382,10 @@ async def webrtc_offer(params: WebRTCOffer):
 
 
 
+
+# Mount frontend static files
+# This is placed at the end to ensure API routes take precedence
+app.mount("/", StaticFiles(directory="Frontend/dist", html=True), name="static")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
