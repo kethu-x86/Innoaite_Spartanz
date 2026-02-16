@@ -77,26 +77,22 @@ class StreamGenerator:
             cam_id = self.labels[self.current_source_idx]
 
             
-            if cap == "dummy":
-                # Generate dummy frame (noise)
-                frame = np.random.randint(0, 255, (self.target_size[1], self.target_size[0], 3), dtype=np.uint8)
-                # Add some moving element to simulate checking?
-                cv2.circle(frame, (self.frame_counter * 10 % 640, 320), 20, (255, 0, 0), -1)
-                time.sleep(0.1) # Simulate frame rate
+            if cap == "dummy" or (isinstance(cap, cv2.VideoCapture) and not cap.isOpened()):
+                if cap != "dummy":
+                    logger.warning(f"Source {self.current_source_idx} ({cam_id}) is not opened, falling back to dummy frames")
+                # Generate dummy frame (noise/pattern)
+                frame = np.zeros((self.target_size[1], self.target_size[0], 3), dtype=np.uint8)
+                # Add a moving circle to show it's "live"
+                cv2.circle(frame, (int(time.time() * 100) % self.target_size[0], self.target_size[1] // 2), 40, (0, 255, 0), -1)
+                cv2.putText(frame, f"CAM {cam_id} OFFLINE", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                time.sleep(0.03) # ~30 FPS
                 ret = True
-            elif not cap.isOpened():
-                logger.warning(f"Source {self.current_source_idx} ({cam_id}) is not opened, skipping...")
-                self._advance_source()
-                # If we've circled back to the start and nothing is open, sleep a bit
-                if self.current_source_idx == 0:
-                    time.sleep(1.0)
-                continue
             else:
                 ret, frame = cap.read()
             
             if not ret:
                 # If video ends, loop it
-                if cap != "dummy":
+                if isinstance(cap, cv2.VideoCapture) and cap.isOpened():
                     logger.info(f"Source {self.current_source_idx} ended, restarting...")
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 continue

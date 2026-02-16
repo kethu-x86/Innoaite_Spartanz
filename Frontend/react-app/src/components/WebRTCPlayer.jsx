@@ -20,8 +20,13 @@ const WebRTCPlayer = ({ camId }) => {
                 peerConnection.current.close();
             }
 
-            // Create RTCPeerConnection
-            const pc = new RTCPeerConnection();
+            // Create RTCPeerConnection with STUN server
+            const pc = new RTCPeerConnection({
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            });
             peerConnection.current = pc;
 
             // Handle incoming tracks

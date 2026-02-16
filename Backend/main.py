@@ -1,3 +1,13 @@
+import os
+import asyncio
+
+# Windows-specific fix for aiortc and asyncio networking
+if os.name == 'nt':
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except Exception as e:
+        pass # Fallback to default if already set or not available
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
@@ -329,15 +339,25 @@ async def webrtc_offer(params: WebRTCOffer):
             await pc.close()
             pcs.discard(pc)
 
+    @pc.on("iceconnectionstatechange")
+    async def on_iceconnectionstatechange():
+        logger.info(f"ICE connection state for {params.cam_id} is {pc.iceConnectionState}")
+
+    @pc.on("icegatheringstatechange")
+    async def on_icegatheringstatechange():
+        logger.info(f"ICE gathering state for {params.cam_id} is {pc.iceGatheringState}")
+
     # Add the video track
     def get_frame():
         with lock:
-            if params.cam_id and params.cam_id in latest_frames:
+            if params.cam_id and params.cam_id in latest_frames and latest_frames[params.cam_id] is not None:
                 return latest_frames[params.cam_id].copy()
             if output_frame is not None:
+                # logger.debug(f"Cam {params.cam_id} frame not ready, using global output_frame")
                 return output_frame.copy()
             return None
 
+    logger.info(f"Adding VideoTransformTrack for {params.cam_id}")
     pc.addTrack(VideoTransformTrack(get_frame))
 
 
@@ -345,6 +365,14 @@ async def webrtc_offer(params: WebRTCOffer):
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)
+
+    # Wait for ICE gathering to complete (non-trickle WebRTC)
+    logger.info(f"Waiting for ICE gathering to complete for {params.cam_id}...")
+    gather_timeout = 5.0 # 5 seconds max wait
+    start_gather = time.time()
+    while pc.iceGatheringState != "complete" and (time.time() - start_gather) < gather_timeout:
+        await asyncio.sleep(0.1)
+    logger.info(f"ICE gathering state: {pc.iceGatheringState}")
 
     return JSONResponse(content={
         "sdp": pc.localDescription.sdp,
