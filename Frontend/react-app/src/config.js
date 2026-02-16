@@ -18,7 +18,7 @@ export const API_BASE_URL =
   window.location.port === "8000"
     ? "" // Relative if served by the backend itself
     : window.location.hostname === "localhost"
-      ? "http://localhost:8000"
+      ? "http://100.107.46.86:8000" // Forced remote IP as per user request
       : FALLBACK_URL;
 
 export const ENDPOINTS = {

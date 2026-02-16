@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ENDPOINTS } from '../config';
+import { api } from '../services/api';
 
 const MaskCanvas = ({ camId, onSave }) => {
     const canvasRef = useRef(null);
@@ -79,26 +79,11 @@ const MaskCanvas = ({ camId, onSave }) => {
 
         setStatus({ message: 'Saving mask...', type: 'info' });
         try {
-            const response = await fetch(ENDPOINTS.SET_MASK, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    cam_id: camId,
-                    points: points,
-                }),
-            });
-
-            if (response.ok) {
-                setStatus({ message: `Success: Mask saved for ${camId}!`, type: 'success' });
-                if (onSave) onSave();
-            } else {
-                const error = await response.text();
-                setStatus({ message: `Error: ${error}`, type: 'error' });
-            }
+            await api.setMask(camId, points);
+            setStatus({ message: `Success: Mask saved for ${camId}!`, type: 'success' });
+            if (onSave) onSave();
         } catch (err) {
-            setStatus({ message: `Network Error: ${err.message}`, type: 'error' });
+            setStatus({ message: `Error: ${err.message}`, type: 'error' });
         }
     };
 
@@ -128,6 +113,5 @@ const MaskCanvas = ({ camId, onSave }) => {
         </div>
     );
 };
-
 
 export default MaskCanvas;

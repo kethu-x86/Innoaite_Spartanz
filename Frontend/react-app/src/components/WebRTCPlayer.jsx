@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ENDPOINTS } from '../config';
+import { api } from '../services/api';
 
 const WebRTCPlayer = ({ camId }) => {
     const videoRef = useRef(null);
@@ -57,24 +57,8 @@ const WebRTCPlayer = ({ camId }) => {
 
                 const offerSdp = pc.localDescription.sdp;
 
-                // Send offer to backend
-                const response = await fetch(ENDPOINTS.OFFER, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        sdp: offerSdp,
-                        type: 'offer',
-                        cam_id: camId // Send camId if provided
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
-                }
-
-                const answer = await response.json();
+                // Send offer to backend via API service
+                const answer = await api.sendOffer(offerSdp, 'offer', camId);
                 await pc.setRemoteDescription(answer);
 
             } catch (err) {
