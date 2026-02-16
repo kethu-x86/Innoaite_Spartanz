@@ -98,18 +98,47 @@ const MaskCanvas = ({ camId, onSave }) => {
                     className="mask-overlay"
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'crosshair' }}
                 />
-            </div>
-
-            <div className="controls" style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}>
-                <button className="btn secondary" onClick={undoLastPoint} disabled={points.length === 0}>Undo</button>
-                <button className="btn secondary" onClick={clearMask}>Clear All</button>
-                <button className="btn primary" onClick={saveMask}>Save Mask</button>
-            </div>
-            {status.message && (
-                <div className={`status-message ${status.type}`} style={{ marginTop: '0.5rem' }}>
-                    {status.message}
+                
+                {/* Floating Controls Overlay */}
+                <div className="mask-controls-overlay" style={{ 
+                    position: 'absolute', 
+                    bottom: '20px', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)',
+                    display: 'flex', 
+                    gap: '12px',
+                    zIndex: 20,
+                    background: 'rgba(15, 23, 42, 0.8)',
+                    padding: '10px 20px',
+                    borderRadius: '12px',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+                }}>
+                    <button className="glass-btn btn-sm" onClick={undoLastPoint} disabled={points.length === 0} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Undo</button>
+                    <button className="glass-btn btn-sm" onClick={clearMask} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Clear All</button>
+                    <button className="glass-btn btn-sm primary" onClick={saveMask} style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'var(--primary)', color: 'white' }}>Save Mask</button>
                 </div>
-            )}
+
+                {status.message && (
+                    <div className={`status-message ${status.type}`} style={{ 
+                        position: 'absolute',
+                        top: '20px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        background: status.type === 'success' ? 'rgba(16, 185, 129, 0.8)' : status.type === 'error' ? 'rgba(239, 68, 68, 0.8)' : 'rgba(59, 130, 246, 0.8)',
+                        color: 'white',
+                        fontSize: '0.85rem',
+                        fontWeight: '500',
+                        zIndex: 25,
+                        backdropFilter: 'blur(4px)'
+                    }}>
+                        {status.message}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

@@ -29,9 +29,11 @@ class VideoTransformTrack(MediaStreamTrack):
         pts, time_base = await self.next_timestamp()
 
         # Iterative retry loop (replaces unbounded recursion)
-        for _ in range(MAX_RECV_RETRIES):
+        for i in range(MAX_RECV_RETRIES):
             frame = self.get_frame_callback()
             if frame is not None:
+                if i > 0:
+                    logger.debug(f"Frame recovered after {i} retries")
                 new_frame = VideoFrame.from_ndarray(frame, format="bgr24")
                 new_frame.pts = pts
                 new_frame.time_base = time_base
@@ -39,7 +41,7 @@ class VideoTransformTrack(MediaStreamTrack):
             await asyncio.sleep(0.01)
 
         # Fallback: return a black frame to keep the stream alive
-        logger.warning("No frame available after retries, sending blank frame")
+        logger.warning("No frame available after 3s of retries, sending blank frame")
         blank = np.zeros((480, 640, 3), dtype=np.uint8)
         new_frame = VideoFrame.from_ndarray(blank, format="bgr24")
         new_frame.pts = pts

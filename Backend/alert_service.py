@@ -64,11 +64,11 @@ class AlertEngine:
         max_dir = max(direction_status, key=direction_status.get) if direction_status else "Unknown"
         # Classify severity
         severity = SEVERITY_NORMAL
-        if queue > 20 or wait > 360:
+        if queue > 60 or wait > 360:
             severity = SEVERITY_CRITICAL
-        elif queue > 10 or wait > 180:
+        elif queue > 48 or wait > 180:
             severity = SEVERITY_HEAVY
-        elif queue > 5 or wait > 60:
+        elif queue > 36 or wait > 60:
             severity = SEVERITY_MODERATE
 
         # Build human-readable message

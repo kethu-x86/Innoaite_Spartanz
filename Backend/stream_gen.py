@@ -85,7 +85,11 @@ class StreamGenerator:
                 time.sleep(0.1) # Simulate frame rate
                 ret = True
             elif not cap.isOpened():
+                logger.warning(f"Source {self.current_source_idx} ({cam_id}) is not opened, skipping...")
                 self._advance_source()
+                # If we've circled back to the start and nothing is open, sleep a bit
+                if self.current_source_idx == 0:
+                    time.sleep(1.0)
                 continue
             else:
                 ret, frame = cap.read()

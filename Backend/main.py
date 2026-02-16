@@ -119,7 +119,7 @@ def processing_loop():
 
 @app.get("/")
 def read_root():
-    return {"message": "Smart Traffic Monitor API — Kochi"}
+    return {"message": "Smart Traffic API"}
 
 @app.get("/data")
 def get_data():
@@ -314,13 +314,17 @@ class WebRTCOffer(BaseModel):
 
 @app.post("/offer")
 async def webrtc_offer(params: WebRTCOffer):
+    logger.info(f"Received WebRTC offer for cam_id: {params.cam_id}")
     offer = RTCSessionDescription(sdp=params.sdp, type=params.type)
-    pc = RTCPeerConnection()
+    
+    # Use Google STUN server for better connectivity
+    config = RTCConfiguration(iceServers=[RTCIceServer(urls=["stun:stun.l.google.com:19302"])])
+    pc = RTCPeerConnection(configuration=config)
     pcs.add(pc)
 
     @pc.on("connectionstatechange")
     async def on_connectionstatechange():
-        logger.info(f"Connection state is {pc.connectionState}")
+        logger.info(f"Connection state for {params.cam_id} is {pc.connectionState}")
         if pc.connectionState == "failed" or pc.connectionState == "closed":
             await pc.close()
             pcs.discard(pc)

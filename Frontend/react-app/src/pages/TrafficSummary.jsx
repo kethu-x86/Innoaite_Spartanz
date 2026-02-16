@@ -9,7 +9,7 @@ const TrafficSummary = () => {
     const { summary, refreshSummary, alerts, violations, emergency } = useTraffic();
     const rl = summary?.context?.rl || {};
     const avgs = rl.avg_counts || {};
-    const congestionIndex = rl.predicted_congestion_index || 0;
+    const congestionIndex = rl.predicted_congestion_index /18 || 0;
     const narrativeText = summary?.summary || 'Loading traffic summary...';
     const current = alerts?.current;
     const violationList = violations?.violations || [];
@@ -41,7 +41,9 @@ const TrafficSummary = () => {
                             <h3><FileText size={18} /> AI Traffic Summary</h3>
                         </div>
                         <div className="narrative-box glass-inset">
-                            <ReactMarkdown className="narrative-text">{narrativeText}</ReactMarkdown>
+                            <div className="narrative-text">
+                                <ReactMarkdown>{narrativeText}</ReactMarkdown>
+                            </div>
                         </div>
                     </div>
 
@@ -80,7 +82,7 @@ const TrafficSummary = () => {
                             <div className="gauge-value" style={{
                                 color: congestionIndex > 0.7 ? 'var(--danger)' : congestionIndex > 0.4 ? 'var(--warning)' : 'var(--success)',
                             }}>
-                                {(congestionIndex * 100).toFixed(0)}%
+                                {(congestionIndex * 4).toFixed(0)}%
                             </div>
                             <div className="gauge-bar">
                                 <div className="gauge-fill" style={{

@@ -86,7 +86,7 @@ class TrafficNarrator:
             avgs = rl.get('avg_counts', {})
             if avgs:
                 text += f"10-min Average: N:{avgs.get('North',0):.1f}, S:{avgs.get('South',0):.1f}, E:{avgs.get('East',0):.1f}, W:{avgs.get('West',0):.1f}\n"
-            text += f"AI Congestion Index: {rl.get('predicted_congestion_index', 0):.2f}\n"
+            text += f"AI Congestion Index: {(rl.get('predicted_congestion_index', 0) / 20):.2f}\n"
             
             queue = rl.get('queue_length', 0)
             wait = rl.get('waiting_time', 0)

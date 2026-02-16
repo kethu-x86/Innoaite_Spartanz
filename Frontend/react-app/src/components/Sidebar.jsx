@@ -71,7 +71,7 @@ const Sidebar = () => {
                             <Activity size={18} color="white" />
                         </div>
                         <span style={{ fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>
-                            Kochi<span style={{ color: 'var(--primary)' }}>AI</span>
+                            Smart Traffic <span style={{ color: 'var(--primary)' }}>AI</span>
                         </span>
                     </div>
                 )}

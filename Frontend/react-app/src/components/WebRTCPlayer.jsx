@@ -26,14 +26,23 @@ const WebRTCPlayer = ({ camId }) => {
 
             // Handle incoming tracks
             pc.ontrack = (event) => {
+                console.log('WebRTC: Received track', event.track.kind);
                 if (videoRef.current) {
-                    videoRef.current.srcObject = event.streams[0];
+                    if (event.streams && event.streams[0]) {
+                        videoRef.current.srcObject = event.streams[0];
+                    } else {
+                        // Fallback: create a new MediaStream if one isn't provided
+                        console.log('WebRTC: No stream in event, creating one from track');
+                        const stream = new MediaStream([event.track]);
+                        videoRef.current.srcObject = stream;
+                    }
                     setStatus('connected');
                     setRetryCount(0); // Reset retries on success
                 }
             };
 
             pc.onconnectionstatechange = () => {
+                console.log('WebRTC: Connection state:', pc.connectionState);
                 if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
                     if (retryCount < MAX_RETRIES) {
                         console.log(`Connection ${pc.connectionState}, retrying (${retryCount + 1}/${MAX_RETRIES})...`);
@@ -52,28 +61,39 @@ const WebRTCPlayer = ({ camId }) => {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
 
-            // Wait for ICE gathering to complete with 5s timeout
-            await Promise.race([
-                new Promise((resolve) => {
-                    if (pc.iceGatheringState === 'complete') {
-                        resolve();
-                    } else {
-                        const checkState = () => {
-                            if (pc.iceGatheringState === 'complete') {
-                                pc.removeEventListener('icegatheringstatechange', checkState);
-                                resolve();
-                            }
-                        };
-                        pc.addEventListener('icegatheringstatechange', checkState);
-                    }
-                }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('ICE Gathering Timeout')), 5000))
-            ]);
+            // Wait for ICE gathering to complete with 10s timeout
+            try {
+                await Promise.race([
+                    new Promise((resolve) => {
+                        if (pc.iceGatheringState === 'complete') {
+                            resolve();
+                        } else {
+                            const checkState = () => {
+                                if (pc.iceGatheringState === 'complete') {
+                                    pc.removeEventListener('icegatheringstatechange', checkState);
+                                    resolve();
+                                }
+                            };
+                            pc.addEventListener('icegatheringstatechange', checkState);
+                        }
+                    }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('ICE Gathering Timeout')), 10000))
+                ]);
+            } catch (iceErr) {
+                console.warn('ICE gathering timed out or failed, proceeding with partial offer');
+            }
 
             const offerSdp = pc.localDescription.sdp;
 
             // Send offer to backend via API service
             const answer = await api.sendOffer(offerSdp, 'offer', camId);
+            
+            // Critical check: if PC was closed during the await, abort
+            if (pc.signalingState === 'closed') {
+                console.warn('WebRTC connection closed before remote description could be set.');
+                return;
+            }
+            
             await pc.setRemoteDescription(answer);
 
         } catch (err) {
