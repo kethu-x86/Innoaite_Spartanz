@@ -184,7 +184,7 @@ latest_frames = {}  # Store latest frame for each camera for devstream
 lock = threading.Lock()
 
 # Alert & Emergency Systems
-alert_engine = AlertEngine(junction_name="Kochi Junction")
+alert_engine = AlertEngine(junction_name="NeuroTraffic")
 emergency_manager = EmergencyManager(timeout=120)
 
 # WebRTC State
@@ -502,7 +502,7 @@ def get_traffic_summary():
         "emergency": emergency_state,
     }
 
-    summary = traffic_narrator.generate_summary(context, junction_name="Kochi Junction")
+    summary = traffic_narrator.generate_summary(context, junction_name="NeuroTraffic")
     _summary_cache = {"summary": summary, "context": context}
     _summary_cache_time = now
     return _summary_cache

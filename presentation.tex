@@ -1,0 +1,259 @@
+\documentclass{beamer}
+
+% Modern flat theme
+\usetheme[progressbar=frametitle, block=fill]{metropolis}
+\usepackage{appendixnumberbeamer}
+\setlength{\parskip}{0.5em}
+
+\title[NeuroTraffic]{NeuroTraffic: Smart Traffic Control System}
+\subtitle{AI-Driven Adaptive Traffic Management}
+\author{Author Name}
+\institute{College of Engineering Trikaripur}
+\date{\today}
+
+\begin{document}
+
+% ---------------------------------------------------------
+% Title Page
+% ---------------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Outline}
+  \tableofcontents
+\end{frame}
+
+% ---------------------------------------------------------
+% Introduction
+% ---------------------------------------------------------
+\section{1. Introduction}
+
+\begin{frame}{Introduction}
+\begin{itemize}
+    \item Cities are expanding rapidly, and road infrastructure is struggling to keep pace.
+    \item Most traffic signals still operate on fixed timers, regardless of real-time traffic conditions.
+    \item This project explores how AI can enable intersections to adapt dynamically.
+    \item Smarter traffic control reduces commute time, fuel consumption, and emergency delays.
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+% Problem Statement
+% ---------------------------------------------------------
+\section{2. Problem Statement}
+
+\begin{frame}{Problem Statement}
+\begin{itemize}
+    \item Traditional traffic signals follow pre-set timing cycles.
+    \item They cannot adapt to sudden traffic surges or empty lanes.
+    \item This results in:
+    \begin{itemize}
+        \item Unnecessary waiting at red lights
+        \item Heavy congestion during peak hours
+        \item Delayed emergency vehicle movement
+    \end{itemize}
+    \item \textbf{Core Issue:} Lack of an intelligent system that dynamically adjusts signal timing based on live road conditions.
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+% Objective
+% ---------------------------------------------------------
+\section{3. Objective}
+
+\begin{frame}{Objective}
+\textbf{Main Goal:}
+\begin{itemize}
+    \item Develop an AI-powered adaptive traffic signal control system.
+\end{itemize}
+
+\textbf{Specific Objectives:}
+\begin{itemize}
+    \item Real-time vehicle detection and tracking.
+    \item Short-term congestion prediction using sequence models.
+    \item Emergency vehicle prioritization.
+    \item Illegal parking detection at intersections.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Target Outcome}
+\textbf{Target Outcome:}
+\begin{itemize}
+    \item Reduce average waiting time by 30--35\%.
+    \item Maintain sub-second response latency.
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+% Feasibility Study
+% ---------------------------------------------------------
+\section{4. Feasibility Study}
+
+\begin{frame}{Feasibility Study}
+\textbf{Technical Feasibility}
+\begin{itemize}
+    \item Modern AI frameworks enable real-time inference.
+    \item GPU acceleration ensures fast processing.
+\end{itemize}
+
+\textbf{Economic Feasibility}
+\begin{itemize}
+    \item Utilizes existing CCTV infrastructure.
+    \item Avoids expensive road-embedded sensors.
+\end{itemize}
+
+\textbf{Operational Feasibility}
+\begin{itemize}
+    \item Intuitive dashboard for traffic monitoring.
+    \item Clear visualization and alert system.
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+% Requirements
+% ---------------------------------------------------------
+\section{5. Requirements}
+
+\begin{frame}{Requirements}
+\textbf{Functional Requirements}
+\begin{itemize}
+    \item Real-time vehicle counting (Cars, Buses, Trucks, Motorcycles).
+    \item Lane-based detection using polygon masking.
+    \item AI-based dynamic signal switching.
+    \item Emergency vehicle green corridor feature.
+    \item Illegal parking detection for stationary vehicles.
+\end{itemize}
+
+\vspace{0.3cm}
+
+\textbf{Non-Functional Requirements}
+\begin{itemize}
+    \item Low latency video streaming (< 1 sec delay).
+    \item Scalable architecture for multiple intersections.
+    \item Reliable logging and fault tolerance.
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+% Design
+% ---------------------------------------------------------
+\section{6. Design}
+
+\begin{frame}{System Architecture (1/2)}
+\textbf{1. Perception Layer}
+\begin{itemize}
+    \item Processes camera feeds.
+    \item Applies lane masking.
+    \item Uses YOLO-based tracking for vehicle detection.
+\end{itemize}
+
+\textbf{2. Decision Layer}
+\begin{itemize}
+    \item Deep Q-Network for signal decision making.
+    \item Bi-LSTM model for congestion prediction.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{System Architecture (2/2)}
+\textbf{3. Communication Layer}
+\begin{itemize}
+    \item REST APIs for signal control.
+    \item WebRTC for live streaming.
+\end{itemize}
+
+\textbf{4. Presentation Layer}
+\begin{itemize}
+    \item Interactive React dashboard.
+    \item Real-time metrics and alerts.
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+% Implementation
+% ---------------------------------------------------------
+\section{7. Implementation}
+
+\begin{frame}{Tools and Technologies}
+\textbf{Backend}
+\begin{itemize}
+    \item Python (FastAPI, Uvicorn)
+    \item PyTorch
+    \item YOLO for vehicle detection
+    \item OpenCV
+    \item SUMO for simulation
+\end{itemize}
+
+\textbf{Frontend}
+\begin{itemize}
+    \item React + TypeScript
+    \item Tailwind CSS
+    \item React Query
+    \item Recharts for visualization
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+% Testing and Results
+% ---------------------------------------------------------
+\section{8. Testing and Results}
+
+\begin{frame}{Testing Approach}
+
+\textbf{Testing Approach}
+\begin{itemize}
+    \item Traffic simulation using SUMO.
+    \item Comparison between static timer and AI controller.
+    \item Evaluation over 1000 simulation steps.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Results (Simulation)}
+\textbf{Results (Simulation)}
+
+\begin{table}
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+Metric & Static System & NeuroTraffic \\ \hline
+Avg Queue Length & 24 vehicles & $\sim$ 14 vehicles \\ \hline
+Avg Wait Time & 48 sec & $\sim$ 31 sec \\ \hline
+Inference Latency & N/A & $< 40$ ms \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.2cm}
+
+\textbf{Observation:} The AI-based controller significantly reduced congestion while maintaining low latency.
+\end{frame}
+
+% ---------------------------------------------------------
+% Conclusion
+% ---------------------------------------------------------
+\section{9. Conclusion}
+
+\begin{frame}{Conclusion}
+\begin{itemize}
+    \item NeuroTraffic demonstrates how AI can make intersections smarter and adaptive.
+    \item Simulation results show reduced waiting time and improved traffic flow.
+    \item The system is scalable and suitable for smart city deployment.
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{Limitations}
+\begin{itemize}
+    \item Requires robust hardware for real-world deployment.
+    \item Needs testing under varying weather conditions.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Future Work}
+\textbf{Future Work}
+\begin{itemize}
+    \item Multi-intersection coordination.
+    \item City-wide deployment model.
+    \item Integration with smart city infrastructure.
+\end{itemize}
+\end{frame}
+
+\end{document}

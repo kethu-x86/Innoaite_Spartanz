@@ -1,0 +1,13 @@
+\frametitle{Implementation}
+\begin{itemize}
+    \item \textbf{Tools \& Technologies:} List of languages, frameworks, and databases utilized.
+    \item \textbf{Architecture Realization:} Brief on how the design was physically mapped into code.
+    \item \textbf{Key Code Snippet:}
+  \end{itemize}
+\begin{verbatim}
+// Example highlighting a core module
+function initializeSystem() {
+    console.log("System initialized securely.");
+    return true;
+}
+\end{verbatim}

@@ -75,7 +75,7 @@ def init_db():
         INSERT OR IGNORE INTO INTERSECTION (intersection_id, location_name, gps_coords)
         VALUES (?, ?, ?)
         """,
-            ("INT_01", "Kochi Junction", "9.9312, 76.2673"),
+            ("INT_01", "NeuroTraffic", "9.9312, 76.2673"),
         )
 
         conn.commit()

@@ -35,7 +35,7 @@ class AlertEngine:
         - Critical: queue > 20 OR waiting > 360s
     """
 
-    def __init__(self, junction_name="Kochi Junction", max_history=100):
+    def __init__(self, junction_name="NeuroTraffic", max_history=100):
         self.junction_name = junction_name
         self.lock = threading.Lock()
         self.history = deque(maxlen=max_history)
