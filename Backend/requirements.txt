@@ -4,7 +4,6 @@ opencv-python
 ultralytics
 pydantic
 python-multipart
-torch
 traci
 sumolib
 pandas

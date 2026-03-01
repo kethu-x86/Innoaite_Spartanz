@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* 
+  NEO-BRUTALISM THEME VARS
+  0px borders, high contrast, industrial data vibe
+*/
+@theme {
+  --color-brand-black: #09090b;
+  --color-brand-white: #fafafa;
+  --color-brand-green: #b0ff00; /* Acid Green for highlights */
+  --color-brand-red: #ff2a2a; /* Emergency/Violations */
+  --color-brand-gray: #27272a;
+  --color-brand-darkgray: #18181b;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "Roboto Mono", monospace;
+}
+
+@layer base {
+  :root {
+    background-color: var(--color-brand-black);
+    color: var(--color-brand-white);
+    font-family: var(--font-sans);
+  }
+
+  /* Reset for absolute 0px radius brutalism everywhere */
+  * {
+    border-radius: 0px !important;
+  }
+}
+
+@layer components {
+  /* Basic brutalist button */
+  .btn-brutal {
+    @apply px-4 py-2 border-2 border-brand-white bg-transparent text-brand-white font-mono uppercase tracking-wider transition-all duration-150 relative;
+  }
+
+  .btn-brutal:hover {
+    @apply bg-brand-white text-brand-black translate-x-[-2px] translate-y-[-2px];
+    box-shadow: 4px 4px 0px 0px var(--color-brand-green);
+  }
+
+  .btn-brutal-alert {
+    @apply px-4 py-2 border-2 border-brand-red bg-transparent text-brand-red font-mono uppercase tracking-wider transition-all duration-150 relative;
+  }
+
+  .btn-brutal-alert:hover {
+    @apply bg-brand-red text-brand-black border-brand-red;
+    box-shadow: 4px 4px 0px 0px var(--color-brand-white);
+  }
+
+  /* Basic brutalist card */
+  .card-brutal {
+    @apply border-2 border-brand-gray bg-brand-darkgray p-4 flex flex-col;
+  }
+}
+
+/* Custom Scrollbar for data tables */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-brand-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-gray);
+  border: 1px solid var(--color-brand-black);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-green);
+}

@@ -1,0 +1,59 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13, <3.14"
+dependencies = [
+    "aiortc>=1.14.0",
+    "av>=16.1.0",
+    "fastapi>=0.134.0",
+    "joblib>=1.5.3",
+    "markupsafe>=3.0.3",
+    "openai>=2.24.0",
+    "opencv-python>=4.13.0.92",
+    "pandas>=3.0.1",
+    "pydantic>=2.12.5",
+    "python-multipart>=0.0.22",
+    "scikit-learn>=1.8.0",
+    "sumolib>=1.26.0",
+    "tensorrt-cu12>=10.15.1.29",
+    "tensorrt-cu12-bindings>=10.15.1.29",
+    "tensorrt-cu12-libs>=10.15.1.29",
+    "torch>=2.10.0",
+    "torchvision>=0.25.0",
+    "traci>=1.26.0",
+    "ultralytics>=8.4.19",
+    "uvicorn>=0.41.0",
+    "wheel>=0.46.3",
+]
+
+# Add these before running convert.py 
+# "onnx>=1.20.1",
+# "onnxruntime-gpu>=1.24.2",
+# "onnxslim>=0.1.86",
+
+
+[tool.uv]
+link-mode = "symlink"
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "nvidia"
+url = "https://pypi.nvidia.com"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+tensorrt = { index = "nvidia" }
+tensorrt-cu12 = { index = "nvidia" }
+tensorrt-lean = { index = "nvidia" }
+tensorrt-lean-cu12 = { index = "nvidia" }
+tensorrt-cu12-libs = { index = "nvidia" }
+tensorrt-cu12-bindings = { index = "nvidia" }
+

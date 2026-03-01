@@ -2,6 +2,7 @@
 Alert, Violation, and Emergency management for the traffic system.
 Thread-safe in-memory stores with auto-expiry and severity classification.
 """
+
 import threading
 import time
 import logging
@@ -61,7 +62,11 @@ class AlertEngine:
             direction_status[d] = c
 
         # Find the most congested direction
-        max_dir = max(direction_status, key=direction_status.get) if direction_status else "Unknown"
+        max_dir = (
+            max(direction_status, key=direction_status.get)
+            if direction_status
+            else "Unknown"
+        )
         # Classify severity
         severity = SEVERITY_NORMAL
         if queue > 60 or wait > 360:
@@ -85,7 +90,7 @@ class AlertEngine:
             ),
             SEVERITY_CRITICAL: (
                 f"CRITICAL congestion at {self.junction_name} {max_dir} approach: "
-                f"queue {queue} vehicles, average waiting time exceeds {wait/60:.1f} minutes. "
+                f"queue {queue} vehicles, average waiting time exceeds {wait / 60:.1f} minutes. "
                 f"Immediate intervention recommended."
             ),
         }
@@ -174,7 +179,9 @@ class ViolationTracker:
 
                     # Check if it's been stationary long enough
                     duration = now - tracker[best_key]["first_seen"]
-                    if duration >= self.time_threshold and not tracker[best_key].get("flagged"):
+                    if duration >= self.time_threshold and not tracker[best_key].get(
+                        "flagged"
+                    ):
                         tracker[best_key]["flagged"] = True
                         violation = {
                             "type": "illegal_parking",
@@ -198,7 +205,11 @@ class ViolationTracker:
                     matched_keys.add(new_key)
 
             # Prune stale tracks (not seen for 10 seconds)
-            stale = [k for k, v in tracker.items() if now - v["last_seen"] > 10 and k not in matched_keys]
+            stale = [
+                k
+                for k, v in tracker.items()
+                if now - v["last_seen"] > 10 and k not in matched_keys
+            ]
             for k in stale:
                 del tracker[k]
 
@@ -216,11 +227,13 @@ class ViolationTracker:
                 for key, info in tracker.items():
                     duration = now - info["first_seen"]
                     if duration >= self.time_threshold:
-                        stationary.append({
-                            "position": info["pos"],
-                            "duration": round(duration, 1),
-                            "flagged": info.get("flagged", False),
-                        })
+                        stationary.append(
+                            {
+                                "position": info["pos"],
+                                "duration": round(duration, 1),
+                                "flagged": info.get("flagged", False),
+                            }
+                        )
                 if stationary:
                     result[cam_id] = stationary
         return result
@@ -277,17 +290,25 @@ class EmergencyManager:
                     self.active = False
                     self.direction = None
                     self.activated_at = None
-                    self.history.appendleft({
-                        "event": "emergency_expired",
-                        "timestamp": datetime.now().isoformat(),
-                    })
+                    self.history.appendleft(
+                        {
+                            "event": "emergency_expired",
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
                     logger.info("Emergency override auto-expired")
 
             return {
                 "active": self.active,
                 "direction": self.direction,
-                "activated_at": datetime.fromtimestamp(self.activated_at).isoformat() if self.activated_at else None,
-                "remaining_seconds": max(0, int(self.timeout - (time.time() - self.activated_at))) if self.active and self.activated_at else 0,
+                "activated_at": datetime.fromtimestamp(self.activated_at).isoformat()
+                if self.activated_at
+                else None,
+                "remaining_seconds": max(
+                    0, int(self.timeout - (time.time() - self.activated_at))
+                )
+                if self.active and self.activated_at
+                else 0,
             }
 
     def get_priority_direction(self) -> str | None:

@@ -10,10 +10,12 @@ logger = logging.getLogger(__name__)
 
 MAX_RECV_RETRIES = 300  # ~3 seconds at 10ms intervals
 
+
 class VideoTransformTrack(MediaStreamTrack):
     """
     A video stream track that transforms frames from an OpenCV source.
     """
+
     kind = "video"
 
     def __init__(self, get_frame_callback):
@@ -54,14 +56,14 @@ class VideoTransformTrack(MediaStreamTrack):
         """
         if self._start_time is None:
             self._start_time = time.time()
-            
+
         clock_rate = 90000
         # Target 30 FPS
         self._timestamp += int(clock_rate / 30)
-        
+
         # Add some pacing
         wait = self._start_time + (self._timestamp / clock_rate) - time.time()
         if wait > 0:
             await asyncio.sleep(wait)
-            
+
         return self._timestamp, fractions.Fraction(1, clock_rate)
