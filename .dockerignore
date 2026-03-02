@@ -1,0 +1,17 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.db
+node_modules
+dist
+.env
+.ipynb_checkpoints
+.gemini
+Backend/models/*.engine
+Backend/models/*.pt
+ScreenShots/
+mask.json

@@ -11,8 +11,9 @@ if os.name == "nt":
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from fastapi import Query
-from pydantic import BaseModel, Field
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+import cv2
 import threading
 import time
 import uvicorn
@@ -233,11 +234,7 @@ def processing_loop():
     except Exception as e:
         logger.error(f"Error in processing loop: {e}")
 
-
-@app.get("/", tags=["General"], summary="Root Endpoint")
-def read_root():
-    """Returns a simple greeting message from the API."""
-    return {"message": "Smart Traffic API"}
+# Served via StaticFiles mount below
 
 
 @app.get("/data", tags=["General"], summary="Get Latest Traffic Counts")
@@ -644,6 +641,10 @@ def api_get_violations_logs(
 
     return database.get_violations(limit, offset)
 
+
+# Mount frontend static files
+# This is placed at the end to ensure API routes take precedence
+app.mount("/", StaticFiles(directory="Frontend/dist", html=True), name="static")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
