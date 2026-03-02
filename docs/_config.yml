@@ -1,5 +1,9 @@
 remote_theme: just-the-docs/just-the-docs
 
+mermaid:
+  version: "11"
+  # custom mermaid config is handled in _includes/mermaid.html
+
 title: NeuroTraffic Docs
 description: Smart Traffic Control System — AI-driven detection, RL optimization & WebRTC streaming.
 baseurl: "/Innoaite_Spartanz"
