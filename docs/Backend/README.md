@@ -10,6 +10,8 @@ permalink: /Backend/
 
 ## System Architecture
 
+{% raw %}
+
 ```mermaid
 graph TD
     A[Camera Feeds / SUMO] -->|Raw Frames/Data| B(stream_gen.py)
@@ -27,6 +29,8 @@ graph TD
 
     E -->|Historical Logs| K[(SQLite DB)]
 ```
+
+{% endraw %}
 
 The NeuroTraffic Backend is a high-performance Python-based system built with FastAPI. It serves as the orchestrator for real-time traffic monitoring, AI-driven traffic signal control, and simulation management.
 
@@ -60,3 +64,7 @@ The NeuroTraffic Backend is a high-performance Python-based system built with Fa
 - **WebRTC**: `aiortc`
 - **Database**: SQLite
 - **Environment**: Python 3.10+
+
+```
+
+```
