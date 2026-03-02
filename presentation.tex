@@ -1,13 +1,19 @@
-\documentclass{beamer}
+\documentclass[aspectratio=169]{beamer}
 
 % Modern flat theme
 \usetheme[progressbar=frametitle, block=fill]{metropolis}
 \usepackage{appendixnumberbeamer}
-\setlength{\parskip}{0.5em}
+\usepackage{graphicx}
+% \setlength{\parskip}{0.5em} % Removed as it causes overfull \vbox on title page
 
 \title[NeuroTraffic]{NeuroTraffic: Smart Traffic Control System}
 \subtitle{AI-Driven Adaptive Traffic Management}
-\author{Author Name}
+\author{
+  {\small 
+    Anukheth Sunil (TKR23CS028) \quad Anal KP (TKR23CS022) \\ 
+    Anju Karun (TKR23CS026) \quad Adith M (TKR23CS011)
+  }
+}
 \institute{College of Engineering Trikaripur}
 \date{\today}
 
@@ -16,7 +22,7 @@
 % ---------------------------------------------------------
 % Title Page
 % ---------------------------------------------------------
-\begin{frame}
+\begin{frame}[shrink]
   \titlepage
 \end{frame}
 
@@ -169,6 +175,26 @@
 \end{itemize}
 \end{frame}
 
+\begin{frame}{System Architecture Diagram}
+    \begin{center}
+        \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{arch.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Data Flow Diagram}
+    \begin{center}
+        \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{flow.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Entity Relationship Diagram}
+    \begin{center}
+        \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{er.png}
+    \end{center}
+\end{frame}
+
+
+
 % ---------------------------------------------------------
 % Implementation
 % ---------------------------------------------------------
@@ -225,6 +251,12 @@ Inference Latency & N/A & $< 40$ ms \\ \hline
 \vspace{0.2cm}
 
 \textbf{Observation:} The AI-based controller significantly reduced congestion while maintaining low latency.
+\end{frame}
+
+\begin{frame}{User Interface}
+    \begin{center}
+        \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{ui.png}
+    \end{center}
 \end{frame}
 
 % ---------------------------------------------------------
