@@ -1,3 +1,10 @@
+---
+layout: default
+title: API Services
+nav_order: 1
+parent: Frontend Overview
+---
+
 # API Services Documentation
 
 This document provides an overview of the modular service functions used to interact with the NeuroTraffic Backend. All services utilize the centralized `apiClient`.

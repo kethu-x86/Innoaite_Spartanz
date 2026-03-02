@@ -1,3 +1,10 @@
+---
+layout: default
+title: API Client
+nav_order: 2
+parent: Frontend Overview
+---
+
 # api/client.ts Documentation
 
 ## Overview

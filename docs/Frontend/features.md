@@ -1,3 +1,10 @@
+---
+layout: default
+title: Features
+nav_order: 2
+parent: Frontend Overview
+---
+
 # Frontend Features Documentation
 
 This document describes the high-level features and component interactions within the NeuroTraffic Frontend.

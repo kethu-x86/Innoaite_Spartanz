@@ -1,6 +1,7 @@
 ---
 layout: default
-title: NeuroTraffic Documentation
+title: About
+nav_order: 5
 ---
 
 # 🚦 NeuroTraffic Smart Traffic System

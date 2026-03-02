@@ -1,3 +1,11 @@
+---
+layout: default
+title: Frontend Overview
+nav_order: 2
+has_children: true
+permalink: /Frontend/
+---
+
 # Frontend Overview - NeuroTraffic
 
 The NeuroTraffic Frontend is a modern, responsive React 19 application built with TypeScript, Vite, and Tailwind CSS. It provides a real-time dashboard for traffic monitoring, simulation control, and historical data analysis.

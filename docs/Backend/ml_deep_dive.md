@@ -1,3 +1,10 @@
+---
+layout: default
+title: ML Deep Dive
+nav_order: 1
+parent: Backend Overview
+---
+
 # Machine Learning Deep Dive - LSTM & DQN
 
 This document provides a comprehensive, beginner-friendly explanation of the two primary AI models powering the NeuroTraffic Smart Traffic Control system: the **LSTM** (Forecaster) and the **DQN** (Decision Maker).

@@ -1,3 +1,10 @@
+---
+layout: default
+title: UI Components
+nav_order: 3
+parent: Frontend Overview
+---
+
 # Frontend UI Components Documentation
 
 NeuroTraffic uses a set of primitive UI components built with Tailwind CSS and inspired by "Brutalist" and "Glassmorphism" design trends. These components are located in `src/components/ui/`.

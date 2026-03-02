@@ -1,3 +1,10 @@
+---
+layout: default
+title: Database Schema
+nav_order: 2
+parent: Backend Overview
+---
+
 # database.py Documentation
 
 ## Overview

@@ -1,3 +1,9 @@
+---
+layout: default
+title: Glossary
+nav_order: 6
+---
+
 # NeuroTraffic Project Glossary
 
 This glossary explains technical terms and acronyms used throughout the NeuroTraffic project for easy reference.

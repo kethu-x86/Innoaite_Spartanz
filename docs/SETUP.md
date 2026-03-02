@@ -1,3 +1,9 @@
+---
+layout: default
+title: Setup & Installation
+nav_order: 4
+---
+
 # Setup & Installation Guide
 
 Follow these steps to get the NeuroTraffic system running on your local machine.

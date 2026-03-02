@@ -1,3 +1,10 @@
+---
+layout: default
+title: Types & Hooks
+nav_order: 4
+parent: Frontend Overview
+---
+
 # Frontend Types & Hooks Documentation
 
 ## 1. types/api.ts

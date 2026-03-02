@@ -1,3 +1,11 @@
+---
+layout: default
+title: Backend Overview
+nav_order: 3
+has_children: true
+permalink: /Backend/
+---
+
 # Backend Overview - NeuroTraffic
 
 ## System Architecture
@@ -43,8 +51,8 @@ The NeuroTraffic Backend is a high-performance Python-based system built with Fa
 
 ## More Information
 
-- [**ML Deep Dive (LSTM & DQN)**](file:///c:/Users/Kai/Mod_Builds/Innoate/Docs/Backend/ml_deep_dive.md) - **Recommended for understanding the AI brain.**
-- [**Project Glossary**](file:///c:/Users/Kai/Mod_Builds/Innoate/Docs/GLOSSARY.md) - Definitions of all technical terms.
+- [**ML Deep Dive (LSTM & DQN)**](./ml_deep_dive) - **Recommended for understanding the AI brain.**
+- [**Project Glossary**](../GLOSSARY) - Definitions of all technical terms.
 
 - **Framework**: FastAPI (Asynchronous Python)
 - **ML/Inference**: YOLOv8 (Ultralytics), PyTorch, TensorRT (via `.engine` models)

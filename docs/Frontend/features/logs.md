@@ -1,3 +1,10 @@
+---
+layout: default
+title: Logs Dashboard
+nav_order: 1
+parent: Frontend Overview
+---
+
 # Logs Dashboard Feature
 
 ## Overview

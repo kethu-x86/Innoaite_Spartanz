@@ -1,3 +1,10 @@
+---
+layout: default
+title: Stream Generator
+nav_order: 8
+parent: Backend Overview
+---
+
 # stream_gen.py Documentation
 
 ## Overview

@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NeuroTraffic – Frontend Development Log</title>
 
-    <script type="module">
-      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "default" });
-    </script>
-
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -54,10 +49,15 @@
 
       .diagram {
         background: #fff;
-        padding: 18px;
+        padding: 24px;
         border: 1px solid #ddd;
         margin: 20px 0;
         overflow-x: auto;
+      }
+
+      svg text {
+        font-size: 13px;
+        font-weight: 500;
       }
 
       code {
@@ -73,54 +73,142 @@
     <h1>NeuroTraffic Frontend Development Log</h1>
 
     <div class="context">
-      <strong>Project Phase:</strong> Frontend Implementation The team
+      <strong>Project Phase:</strong> Frontend Implementation. The team
       transitioned from backend processing to delivering a high-performance,
       operator-focused interface for real-time traffic monitoring and simulation
       visualization.
     </div>
 
-    <!-- DAY 1 -->
+    <!-- PHASE 1 -->
     <div class="entry">
       <div class="date">Phase 1: Interface Foundation & Design System</div>
       <h2>Brutalist UI Architecture & Application Setup</h2>
 
       <p>
         The frontend development phase commenced with the establishment of a
-        scalable and maintainable React architecture. The primary objective was
-        to deliver a high-clarity, performance-driven interface aligned with
-        operational control environments.
+        scalable and maintainable React architecture designed for operational
+        clarity and long-term extensibility.
       </p>
 
       <ul>
         <li>
-          Initialized the application using <strong>React (Vite)</strong> for
-          optimized build performance and modular scalability.
+          Application initialized using React (Vite) for optimized build
+          performance.
         </li>
+        <li>Structured design system implemented using Tailwind CSS.</li>
         <li>
-          Implemented a structured design system using
-          <strong>Tailwind CSS</strong>, emphasizing high contrast,
-          accessibility, and visual hierarchy.
-        </li>
-        <li>
-          Designed the global layout in <code>App.tsx</code> with a persistent
-          sidebar, structured routing, and responsive content containers.
+          Global layout defined in <code>App.tsx</code> with persistent
+          navigation and routed content views.
         </li>
       </ul>
 
       <h3>UI Component Architecture</h3>
 
       <div class="diagram">
-        <div class="mermaid">
-          graph TD App["App.tsx"] Provider["SimulationProvider"] Layout["Main
-          Layout"] Nav["Sidebar Navigation"] Routes["React Router"]
-          Dashboard["Dashboard.tsx"] Simulation["SimulationPanel.tsx"] App -->
-          Provider Provider --> Layout Layout --> Nav Layout --> Routes Routes
-          --> Dashboard Routes --> Simulation
-        </div>
+        <svg width="800" height="220">
+          <!-- Boxes -->
+          <rect
+            x="40"
+            y="80"
+            width="140"
+            height="50"
+            fill="#e3f2fd"
+            stroke="#1e88e5"
+          />
+          <text x="70" y="110">App.tsx</text>
+
+          <rect
+            x="230"
+            y="80"
+            width="180"
+            height="50"
+            fill="#e8f5e9"
+            stroke="#43a047"
+          />
+          <text x="255" y="110">SimulationProvider</text>
+
+          <rect
+            x="450"
+            y="80"
+            width="140"
+            height="50"
+            fill="#fff3e0"
+            stroke="#fb8c00"
+          />
+          <text x="480" y="110">Main Layout</text>
+
+          <rect
+            x="650"
+            y="40"
+            width="130"
+            height="50"
+            fill="#fce4ec"
+            stroke="#d81b60"
+          />
+          <text x="670" y="70">Sidebar</text>
+
+          <rect
+            x="650"
+            y="130"
+            width="130"
+            height="50"
+            fill="#ede7f6"
+            stroke="#5e35b1"
+          />
+          <text x="670" y="160">Routes</text>
+
+          <!-- Arrows -->
+          <line
+            x1="180"
+            y1="105"
+            x2="230"
+            y2="105"
+            stroke="#333"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="410"
+            y1="105"
+            x2="450"
+            y2="105"
+            stroke="#333"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="590"
+            y1="105"
+            x2="650"
+            y2="65"
+            stroke="#333"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="590"
+            y1="105"
+            x2="650"
+            y2="155"
+            stroke="#333"
+            marker-end="url(#arrow)"
+          />
+
+          <!-- Arrow Marker -->
+          <defs>
+            <marker
+              id="arrow"
+              markerWidth="10"
+              markerHeight="10"
+              refX="8"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#333" />
+            </marker>
+          </defs>
+        </svg>
       </div>
     </div>
 
-    <!-- DAY 2 -->
+    <!-- PHASE 2 -->
     <div class="entry">
       <div class="date">
         Phase 2: Real-Time Visualization & Streaming Integration
@@ -128,65 +216,148 @@
       <h2>WebRTC Playback & Simulation Overlay</h2>
 
       <p>
-        The primary technical challenge involved synchronizing low-latency
-        WebRTC video streams with high-frequency simulation metrics. The
-        solution focused on deterministic rendering and state alignment between
-        streaming media and simulation data.
+        This phase focused on deterministic synchronization between live WebRTC
+        streams and high-frequency simulation metrics.
       </p>
 
       <ul>
         <li>
-          Developed the <code>WebRTCPlayer</code> component to manage signaling,
-          peer connection lifecycle, and media playback.
+          Developed <code>WebRTCPlayer</code> to manage peer lifecycle and
+          playback.
         </li>
+        <li>Implemented <code>SumoOverlay</code> using HTML5 Canvas.</li>
         <li>
-          Implemented the <code>SumoOverlay</code> using HTML5 Canvas to render
-          dynamic vehicle positions accurately over the live video feed.
-        </li>
-        <li>
-          Created the <code>useSimulation</code> custom hook to synchronize
-          WebRTC stream state with simulation metrics APIs.
+          Created <code>useSimulation</code> hook for synchronized state
+          management.
         </li>
       </ul>
 
       <h3>Frontend Data Flow</h3>
 
       <div class="diagram">
-        <div class="mermaid">
-          graph LR API["Backend API"] Player["WebRTCPlayer"] Hook["useSimulation
-          Hook"] Canvas["SumoOverlay Canvas"] UI["User Interface"] API
-          -->|WebRTC Offer/Answer| Player API -->|Metrics JSON| Hook Player
-          -->|Video Frame| Canvas Hook -->|Vehicle Coordinates| Canvas Canvas
-          -->|Rendered Output| UI
-        </div>
+        <svg width="800" height="200">
+          <rect
+            x="40"
+            y="75"
+            width="140"
+            height="50"
+            fill="#e3f2fd"
+            stroke="#1e88e5"
+          />
+          <text x="60" y="105">Backend API</text>
+
+          <rect
+            x="240"
+            y="30"
+            width="160"
+            height="50"
+            fill="#e8f5e9"
+            stroke="#43a047"
+          />
+          <text x="260" y="60">WebRTCPlayer</text>
+
+          <rect
+            x="240"
+            y="120"
+            width="160"
+            height="50"
+            fill="#fff3e0"
+            stroke="#fb8c00"
+          />
+          <text x="270" y="150">useSimulation</text>
+
+          <rect
+            x="470"
+            y="75"
+            width="150"
+            height="50"
+            fill="#ede7f6"
+            stroke="#5e35b1"
+          />
+          <text x="495" y="105">SumoOverlay</text>
+
+          <rect
+            x="670"
+            y="75"
+            width="120"
+            height="50"
+            fill="#fce4ec"
+            stroke="#d81b60"
+          />
+          <text x="700" y="105">UI</text>
+
+          <defs>
+            <marker
+              id="arrow2"
+              markerWidth="10"
+              markerHeight="10"
+              refX="8"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#333" />
+            </marker>
+          </defs>
+
+          <line
+            x1="180"
+            y1="100"
+            x2="240"
+            y2="55"
+            stroke="#333"
+            marker-end="url(#arrow2)"
+          />
+          <line
+            x1="180"
+            y1="100"
+            x2="240"
+            y2="145"
+            stroke="#333"
+            marker-end="url(#arrow2)"
+          />
+          <line
+            x1="400"
+            y1="55"
+            x2="470"
+            y2="100"
+            stroke="#333"
+            marker-end="url(#arrow2)"
+          />
+          <line
+            x1="400"
+            y1="145"
+            x2="470"
+            y2="100"
+            stroke="#333"
+            marker-end="url(#arrow2)"
+          />
+          <line
+            x1="620"
+            y1="100"
+            x2="670"
+            y2="100"
+            stroke="#333"
+            marker-end="url(#arrow2)"
+          />
+        </svg>
       </div>
     </div>
 
-    <!-- DAY 3 -->
+    <!-- PHASE 3 -->
     <div class="entry">
       <div class="date">Phase 3: Analytics & Operational Interaction Layer</div>
       <h2>Visualization, Configuration & Reporting</h2>
 
       <p>
-        The final implementation phase focused on analytical visualization,
-        operator configurability, and contextual reporting features to support
-        real-world traffic management workflows.
+        The final implementation stage introduced advanced analytics,
+        configuration controls, and automated situational reporting.
       </p>
 
       <ul>
+        <li>Integrated <code>HistoricalTrendChart</code> using Recharts.</li>
+        <li>Implemented <code>MaskConfig</code> for ROI configuration.</li>
         <li>
-          Integrated <code>Recharts</code> to develop the
-          <code>HistoricalTrendChart</code>, enabling traffic volume analysis
-          and temporal pattern recognition.
-        </li>
-        <li>
-          Designed the <code>MaskConfig</code> module to allow operators to
-          define custom Regions of Interest (ROI) directly on live video
-          streams.
-        </li>
-        <li>
-          Implemented the <code>TrafficNarrator</code> interface to display
-          automated situational summaries in structured natural language.
+          Developed <code>TrafficNarrator</code> for contextual summaries.
         </li>
       </ul>
     </div>

@@ -1,3 +1,10 @@
+---
+layout: default
+title: App.tsx
+nav_order: 1
+parent: Frontend Overview
+---
+
 # App.tsx Documentation
 
 ## Overview

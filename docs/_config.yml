@@ -1,4 +1,24 @@
-theme: jekyll-theme-cayman
-title: NeuroTraffic Documentation
-description: Smart Traffic Control System Docs
-show_downloads: false
+remote_theme: just-the-docs/just-the-docs
+
+title: NeuroTraffic Docs
+description: Smart Traffic Control System — AI-driven detection, RL optimization & WebRTC streaming.
+baseurl: "/Innoaite_Spartanz"
+url: "https://kethu-x86.github.io"
+
+# Just-the-Docs configuration
+color_scheme: dark
+search_enabled: true
+search_tokenizer_separator: /[\s/]+/
+
+nav_sort: case_insensitive
+heading_anchors: true
+aux_links:
+  "View on GitHub":
+    - "https://github.com/kethu-x86/Innoaite_Spartanz"
+aux_links_new_tab: true
+
+footer_content: 'NeuroTraffic &copy; 2025. Built with <a href="https://just-the-docs.com">Just the Docs</a>.'
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
