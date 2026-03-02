@@ -2,21 +2,22 @@ import { useQuery } from '@tanstack/react-query';
 import { logsApi } from '../../api/services/logs';
 import { LogTable } from '../../components/ui/LogTable';
 import { Card } from '../../components/ui/Card';
+import type { TrafficLog } from '../../types/api';
 
 export const TrafficLogsTable = () => {
-    const { data: logs, isLoading } = useQuery<Record<string, unknown>[]>({
-        queryKey: ['api-logs-traffic'],
-        queryFn: async () => (await logsApi.getTrafficLogs(10, 0)) as Record<string, unknown>[],
+    const { data: logs, isLoading } = useQuery<TrafficLog[]>({
+        queryKey: ['api-logs-traffic-dashboard'],
+        queryFn: async () => await logsApi.getTrafficLogs(10, 0),
         refetchInterval: 10000,
     });
 
-    const columns = [
-        { header: 'ID', accessorKey: 'id' },
-        { header: 'TIMESTAMP', accessorKey: 'timestamp' },
-        { header: 'N_Q', accessorKey: 'north_queue' },
-        { header: 'S_Q', accessorKey: 'south_queue' },
-        { header: 'E_Q', accessorKey: 'east_queue' },
-        { header: 'W_Q', accessorKey: 'west_queue' },
+    const columns: { header: string; accessorKey: keyof TrafficLog; cell?: (item: TrafficLog) => React.ReactNode }[] = [
+        { header: 'ID', accessorKey: 'log_id', cell: (row) => row.log_id.substring(0, 8) },
+        { header: 'TIME', accessorKey: 'created_at', cell: (row) => new Date(row.created_at + 'Z').toLocaleTimeString() },
+        { header: 'N_D', accessorKey: 'north_density' },
+        { header: 'S_D', accessorKey: 'south_density' },
+        { header: 'E_D', accessorKey: 'east_density' },
+        { header: 'W_D', accessorKey: 'west_density' },
     ];
 
     return (

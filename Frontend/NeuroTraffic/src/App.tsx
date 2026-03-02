@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from './features/dashboard/Dashboard';
 import SimulationPanel from './features/simulation/SimulationPanel';
+import LogsDashboard from './features/logs/LogsDashboard';
 import { SimulationProvider } from './hooks/useSimulation';
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ function App() {
               <div className="flex flex-col gap-4 mt-8">
                 <Link to="/dashboard" className="font-mono uppercase tracking-wider text-sm hover:text-brand-green transition-colors">Dashboard</Link>
                 <Link to="/simulation" className="font-mono uppercase tracking-wider text-sm hover:text-brand-green transition-colors">Simulation & Control</Link>
+                <Link to="/logs" className="font-mono uppercase tracking-wider text-sm hover:text-brand-green transition-colors">Historical Logs</Link>
               </div>
             </nav>
 
@@ -34,6 +36,7 @@ function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/simulation" element={<SimulationPanel />} />
+                <Route path="/logs" element={<LogsDashboard />} />
               </Routes>
             </main>
             

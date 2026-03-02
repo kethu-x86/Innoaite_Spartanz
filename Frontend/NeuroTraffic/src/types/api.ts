@@ -38,3 +38,33 @@ export interface SystemHealth {
   sumo_running: boolean;
   emergency_override: string | null;
 }
+
+// Historical Log Types mapping to SQLite schema
+export interface TrafficLog {
+  log_id: string;
+  intersection_id: string;
+  created_at: string;
+  total_vehicle_count: number;
+  north_density: number;
+  south_density: number;
+  east_density: number;
+  west_density: number;
+}
+
+export interface SignalSchedule {
+  schedule_id: string;
+  log_id: string;
+  log_time?: string;
+  cycle_duration_seconds: number;
+  split_ratios: Record<string, number> | string;
+  is_emergency_override: boolean | number;
+}
+
+export interface ViolationLog {
+  violation_id: string;
+  intersection_id: string;
+  occurred_at: string;
+  violation_type: string;
+  vehicle_plate_blob: string | null;
+  snapshot_path: string | null;
+}
