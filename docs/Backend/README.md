@@ -4,6 +4,7 @@ title: Backend Overview
 nav_order: 3
 has_children: true
 permalink: /Backend/
+mermaid: true
 ---
 
 # Backend Overview - NeuroTraffic
