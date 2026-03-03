@@ -131,10 +131,10 @@ class AlertEngine:
 class ViolationTracker:
     """
     Tracks stationary vehicles per camera for illegal parking detection.
-    A vehicle is flagged if its centroid doesn't move >15px for 120+ seconds.
+    A vehicle is flagged if its centroid doesn't move >40px for 120+ seconds.
     """
 
-    def __init__(self, distance_threshold=15, time_threshold=120, max_violations=200):
+    def __init__(self, distance_threshold=40, time_threshold=120, max_violations=200):
         self.distance_threshold = distance_threshold
         self.time_threshold = time_threshold
         self.lock = threading.Lock()
@@ -193,6 +193,17 @@ class ViolationTracker:
                         }
                         self.violations.appendleft(violation)
                         logger.info(f"Violation detected: {violation}")
+
+                        try:
+                            import database
+                            database.log_violation(
+                                intersection_id="INT_01",
+                                violation_type="illegal_parking",
+                                plate_blob="",
+                                snapshot_path=f"/snapshots/{cam_id}_{int(now)}.jpg"
+                            )
+                        except Exception as e:
+                            logger.error(f"Failed to log violation to sqlite DB: {e}")
                 else:
                     # New vehicle, not close to any existing track
                     new_key = f"{cam_id}_{cx}_{cy}_{int(now)}"
@@ -204,11 +215,11 @@ class ViolationTracker:
                     }
                     matched_keys.add(new_key)
 
-            # Prune stale tracks (not seen for 10 seconds)
+            # Prune stale tracks (not seen for 60 seconds)
             stale = [
                 k
                 for k, v in tracker.items()
-                if now - v["last_seen"] > 10 and k not in matched_keys
+                if now - v["last_seen"] > 60 and k not in matched_keys
             ]
             for k in stale:
                 del tracker[k]

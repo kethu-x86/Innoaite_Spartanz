@@ -387,6 +387,30 @@ def step_sumo():
 
     # Generate alerts from SUMO metrics
     if metrics:
+        # Log to SQLite Database every 10 steps
+        if metrics.get("step", 0) % 10 == 0:
+            try:
+                import database
+                action = metrics.get("action", 0)
+
+                cycle_duration = (
+                    action.get("cycle", action.get("cycle_duration", 60))
+                    if isinstance(action, dict)
+                    else 60
+                )
+                splits = action.get("splits", {}) if isinstance(action, dict) else {}
+                is_emergency = emergency_dir is not None
+
+                database.log_traffic_and_schedule(
+                    intersection_id="INT_01",
+                    counts=metrics.get("vehicle_count", {}),
+                    cycle_duration=cycle_duration,
+                    split_ratios=splits,
+                    is_emergency=is_emergency,
+                )
+            except Exception as e:
+                logger.error(f"Failed to log SUMO step to sqlite DB: {e}")
+
         alert_engine.evaluate(metrics)
 
         # Auto-detect emergency vehicles from SUMO
