@@ -3,3 +3,26 @@ __pycache__
 *.pyc
 *.pyo
 *.pyd
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.bbl
+*.blg
+*.ilg
+*.ind
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.vrb
+*.snm
+*.nav
